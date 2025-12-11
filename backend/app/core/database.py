@@ -4,7 +4,6 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 
 # -------------------------------------------------------------------
 # POSTGRESQL CONNECTION STRING
-# Format: postgresql://username:password@localhost:5432/db_name
 # -------------------------------------------------------------------
 DATABASE_URL = "postgresql://postgres:wealthplanner@localhost:5432/wealth_management"
 
