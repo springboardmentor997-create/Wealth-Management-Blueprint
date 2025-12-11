@@ -1,0 +1,11 @@
+/* stylelint-disable-next-line at-rule-no-unknown */
+@tailwind base;
+/* stylelint-disable-next-line at-rule-no-unknown */
+@tailwind components;
+/* stylelint-disable-next-line at-rule-no-unknown */
+@tailwind utilities;
+
+body {
+  /* stylelint-disable-next-line at-rule-no-unknown */
+  @apply bg-gray-100;
+}
