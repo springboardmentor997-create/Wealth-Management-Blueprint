@@ -12,7 +12,7 @@ export default function Home() {
           <p className="text-xl text-gray-700 mb-4">
             Logged in as: <span className="font-semibold text-blue-600">{user.email}</span>
           </p>
-          <p className="text-gray-600">You have successfully authenticated.</p>
+          <p className="text-gray-600">You are logged into Wealth App.</p>
         </div>
       ) : (
         <div>

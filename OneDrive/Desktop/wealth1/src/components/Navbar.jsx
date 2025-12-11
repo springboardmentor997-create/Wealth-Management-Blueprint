@@ -7,7 +7,7 @@ export default function Navbar() {
   return (
     <nav className="bg-white shadow-md p-4 flex justify-between px-6">
       <Link to="/" className="text-xl font-semibold">
-        AuthApp
+        Wealth App
       </Link>
 
       <div className="flex gap-4">

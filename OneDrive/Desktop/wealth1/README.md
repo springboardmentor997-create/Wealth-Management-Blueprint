@@ -1,11 +1,11 @@
-# React Tailwind Auth
+# Wealth App
 
-A React authentication application with Tailwind CSS styling and Firebase backend.
+A React application (Wealth App) with Tailwind CSS styling and Firebase backend for user authentication.
 
 ## Project Structure
 
 ```
-react-tailwind-auth/
+wealth-app/
 ├── src/
 │   ├── main.jsx
 │   ├── App.jsx
@@ -69,7 +69,7 @@ npm run build
 
 - User authentication with Firebase
 - Login and registration pages
-- Protected routes with Auth Context
+- Protected routes using `AuthContext.jsx`
 - Responsive design with Tailwind CSS
 - Navigation bar component
 
