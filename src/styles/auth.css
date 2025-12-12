@@ -1,0 +1,204 @@
+:root {
+  --white: #fff;
+  --black: #dc143c; /* Crimson */
+  --lightBlue: #17a;
+  --error: #ff3333;
+  --success: #4BB543;
+  --google: #DB4437;
+  --facebook: #4267B2;
+  --twitter: #1DA1F2;
+}
+
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+/* Center full page */
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #fff;
+}
+
+/* Wrapper */
+.wrapper {
+  position: relative;
+  width: 850px;
+  min-height: 550px;
+  background: var(--white);
+  border: 2px solid var(--black);
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(220, 20, 60, 0.4);
+  display: flex;
+  padding: 40px;
+}
+
+/* Form box */
+.form-box {
+  width: 100%;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--black);
+  margin-bottom: 20px;
+}
+
+/* Input fields */
+.input-box {
+  position: relative;
+  width: 100%;
+  height: 48px;
+  margin: 25px 0;
+}
+
+.input-box input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  border-bottom: 2px solid var(--black);
+  background: transparent;
+  padding-right: 40px;
+  font-size: 16px;
+  color: var(--black);
+}
+
+.input-box input:focus,
+.input-box input:valid {
+  border-bottom-color: var(--lightBlue);
+}
+
+.input-box label {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: 0.3s;
+  pointer-events: none;
+  color: var(--black);
+}
+
+.input-box input:focus ~ label,
+.input-box input:valid ~ label {
+  top: -8px;
+  font-size: 14px;
+  color: var(--lightBlue);
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* Error messages */
+.error-left {
+  font-size: 13px;
+  color: var(--error);
+  margin-top: -18px;
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+/* Button */
+.btn,
+form button {
+  width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: 40px;
+  background: var(--black);
+  color: var(--white);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+/* Social login */
+.social-login {
+  text-align: center;
+  margin: 22px 0;
+}
+
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.social-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  font-size: 18px;
+}
+
+.social-icon:nth-child(1) {
+  background: var(--google);
+}
+
+.social-icon:nth-child(2) {
+  background: var(--facebook);
+}
+
+.social-icon:nth-child(3) {
+  background: var(--twitter);
+}
+
+/* Password strength */
+.password-strength {
+  margin-top: 10px;
+}
+
+.strength-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.bar-segment {
+  height: 5px;
+  flex-grow: 1;
+  background: #ddd;
+  border-radius: 4px;
+}
+
+.strength-text {
+  font-size: 12px;
+  color: var(--black);
+}
+
+/* Remove old rotated background */
+.rotate-bg,
+.rotate-bg2 {
+  display: none !important;
+}
+
+/* Login navigation */
+.linkTxt {
+  text-align: left;
+  margin-top: 15px;
+}
+
+.linkTxt a {
+  color: var(--lightBlue);
+  font-weight: 600;
+  text-decoration: none;
+}
