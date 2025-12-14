@@ -7,6 +7,12 @@ import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
+import Dashboard from "./pages/Dashboard";
+import Goals from "./pages/Goals";
+import Portfolio from "./pages/Portfolio";
+import Simulations from "./pages/Simulations";
+import Reports from "./pages/Reports";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,12 +30,12 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/login" element={<Auth />} />
               <Route path="/register" element={<Auth />} />
-              <Route path="/dashboard" element={<Landing />} />
-              <Route path="/goals" element={<Landing />} />
-              <Route path="/portfolio" element={<Landing />} />
-              <Route path="/simulations" element={<Landing />} />
-              <Route path="/reports" element={<Landing />} />
-              <Route path="/profile" element={<Landing />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/goals" element={<Goals />} />
+              <Route path="/portfolio" element={<Portfolio />} />
+              <Route path="/simulations" element={<Simulations />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/profile" element={<Profile />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
