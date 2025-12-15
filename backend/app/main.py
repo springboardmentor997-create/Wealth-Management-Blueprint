@@ -1,25 +1,23 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.database import engine, Base 
+from app.core.database import engine, Base
+from app.routers import auth_router, user_router 
 
-from app.routers.auth_router import auth_router
-from app.models import user, goal, investment, transaction, recommendation, simulation
-
-# Create Tables
+# Create Database Tables
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Finance Dashboard API")
+app = FastAPI(title="Wealth Management API")
 
+# Setup CORS (Allows Frontend to talk to Backend)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(auth_router)
-
-@app.get("/")
-def read_root():
-    return {"message": "Server is running!"}
+# --- VITAL: Connect the routers ---
+# This looks inside auth_router.py for a variable named 'router'
+app.include_router(auth_router.router)
+app.include_router(user_router.router)
