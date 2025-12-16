@@ -95,7 +95,7 @@ const HeroSection = () => {
             className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10"
           >
             Set financial goals, track investments, and simulate your future wealth
-            with AI-powered insights and beautiful analytics.
+            with smart financial insights and beautiful analytics.
           </motion.p>
 
           {/* CTA Buttons */}

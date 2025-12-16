@@ -1,7 +1,6 @@
 // API Service - Placeholder for FastAPI backend integration
 // Replace BASE_URL with your FastAPI server URL
-
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const BASE_URL = 'http://127.0.0.1:8000';
 
 interface ApiResponse<T> {
   data?: T;
@@ -318,3 +317,8 @@ export interface ReportData {
   generated_at: string;
   data: any;
 }
+// TEMP: Simple dashboard summary (matches current FastAPI)
+export const getDashboardSummary = async () => {
+  const res = await fetch(`${BASE_URL}/api/summary`);
+  return res.json();
+};
