@@ -13,7 +13,7 @@ const Landing = () => {
         <title>WealthTrack - Personalized Wealth Management & Goal Tracker</title>
         <meta
           name="description"
-          content="Set financial goals, track investments, and simulate your future wealth with Smart financial insights. Trusted by 50,000+ investors."
+          content="Set financial goals, track investments, and simulate your future wealth with AI-powered insights. Trusted by 50,000+ investors."
         />
       </Helmet>
 
