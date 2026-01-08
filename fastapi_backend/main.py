@@ -1,0 +1,67 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import os
+from models import Base
+from database import engine
+from routers import auth, goals, investments, transactions, portfolio, simulations, recommendations, reports, market, admin, calculators, dashboard, notifications
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(
+    title="Wealth Management API",
+    description="FastAPI backend for wealth management application",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
+
+# Create uploads directory if it doesn't exist
+os.makedirs("uploads", exist_ok=True)
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="uploads"), name="static")
+
+# CORS middleware
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "http://localhost:5175", 
+    "http://127.0.0.1:5175",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Allow all origins for development
+    allow_credentials=True,
+    allow_methods=["*"], # Allow all methods
+    allow_headers=["*"], # Allow all headers
+)
+
+# Include routers
+app.include_router(auth.router)
+app.include_router(goals.router)
+app.include_router(investments.router)
+app.include_router(transactions.router)
+app.include_router(portfolio.router)
+app.include_router(simulations.router)
+app.include_router(recommendations.router)
+app.include_router(reports.router)
+app.include_router(market.router)
+app.include_router(admin.router)
+app.include_router(calculators.router)
+app.include_router(dashboard.router)
+
+@app.get("/")
+async def root():
+    return {"message": "Wealth Management API", "status": "running", "docs": "/docs"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+app.include_router(notifications.router)
