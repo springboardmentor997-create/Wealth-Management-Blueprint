@@ -1,22 +1,25 @@
-from sqlalchemy import Column, Integer, String, Enum, DateTime
-from datetime import datetime
-from app.core.database import Base # Import Base from the file we just created
-from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
+from app.core.database import Base
 
 class User(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), nullable=False)
-    email = Column(String(120), unique=True, nullable=False, index=True)
-    password = Column(String(255), nullable=False)
+    name = Column(String, nullable=True)
+    email = Column(String, unique=True, index=True)
+    password_hash = Column(String)
+    role = Column(String, default="user")
     
-    risk_profile = Column(Enum('conservative', 'moderate', 'aggressive', name='risk_profile_enum'), nullable=False, default='moderate')
-    kyc_status = Column(Enum('unverified', 'verified', name='kyc_status_enum'), default='unverified')
-    created_at = Column(DateTime, default=datetime.utcnow)
+    # 👇 CHANGED TO SIMPLE STRING (Removes the Enum error)
+    phone = Column(String, nullable=True)
+    kyc_status = Column(String, default="Not Verified")
+    risk_profile = Column(String, default="Moderate")
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    def set_password(self, password):
-        self.password = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password, password)
+    # Relationships
+    investments = relationship("Investment", back_populates="user")
+    goals = relationship("Goal", back_populates="user")
+    transactions = relationship("Transaction", back_populates="user")

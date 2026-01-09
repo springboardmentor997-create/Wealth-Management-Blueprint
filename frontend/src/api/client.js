@@ -1,19 +1,30 @@
 import axios from 'axios';
 
+// 1. Create the Axios Instance
 const client = axios.create({
-  baseURL: 'http://127.0.0.1:8000', // Make sure this points to port 8000!
+  baseURL: 'http://127.0.0.1:8000', // Ensure this matches your FastAPI port
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add token to requests if it exists
-client.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// 2. THE INTERCEPTOR (Crucial!)
+// This function runs BEFORE every request is sent.
+client.interceptors.request.use(
+  (config) => {
+    // Get the token from storage
+    const token = localStorage.getItem('token');
+    
+    // If token exists, attach it to the header
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
 export default client;

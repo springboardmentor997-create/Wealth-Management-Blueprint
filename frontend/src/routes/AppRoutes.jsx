@@ -1,8 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Home from '../pages/Home';
+import Home from '../pages/home';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 import Dashboard from '../pages/dashboard/Dashboard'; 
+import AdminDashboard from '../pages/admin/AdminDashboard';
 
 // Helper to protect routes
 const ProtectedRoute = ({ children }) => {
@@ -26,6 +27,16 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        } 
+      />
+
+      {/* Protected Admin Route - MOVED INSIDE <Routes> */}
+      <Route 
+        path="/admin" 
+        element={
+          <ProtectedRoute>
+            <AdminDashboard />
           </ProtectedRoute>
         } 
       />

@@ -1,4 +1,5 @@
-import { createContext, useState, useEffect } from 'react';
+// 1. ADD 'useContext' to imports
+import { createContext, useState, useEffect, useContext } from 'react';
 import { authApi } from '../api/authApi';
 
 export const AuthContext = createContext();
@@ -13,9 +14,11 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('access_token');
       if (token) {
         try {
-          const userData = await authApi.getMe();
+          // Ensure your authApi has a getMe() function!
+          const userData = await authApi.getMe(); 
           setUser(userData);
         } catch (error) {
+          console.error("Session expired or invalid:", error);
           localStorage.removeItem('access_token');
         }
       }
@@ -25,15 +28,21 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (credentials) => {
+    // Ensure your authApi.login returns the token object
     const data = await authApi.login(credentials);
+    
+    // Save token
     localStorage.setItem('access_token', data.access_token);
-    // After getting token, fetch user details immediately
+    
+    // Fetch user details immediately
     const userData = await authApi.getMe();
     setUser(userData);
   };
 
   const logout = () => {
-    authApi.logout();
+    // Check if authApi.logout exists, otherwise just remove token locally
+    if (authApi.logout) authApi.logout(); 
+    localStorage.removeItem('access_token');
     setUser(null);
   };
 
@@ -42,4 +51,10 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+// 2. ADD THIS CUSTOM HOOK AT THE BOTTOM
+// This is what allows your components to say "const { login } = useAuth();"
+export const useAuth = () => {
+  return useContext(AuthContext);
 };

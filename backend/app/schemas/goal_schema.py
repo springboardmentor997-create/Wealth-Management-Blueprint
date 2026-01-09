@@ -1,33 +1,31 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from datetime import date, datetime
 from typing import Optional
-from enum import Enum
-
-class GoalTypeEnum(str, Enum):
-    retirement = 'retirement'
-    home = 'home'
-    education = 'education'
-    custom = 'custom'
-
-class GoalStatusEnum(str, Enum):
-    active = 'active'
-    paused = 'paused'
-    completed = 'completed'
 
 class GoalBase(BaseModel):
-    goal_type: GoalTypeEnum
+    # Allow title to be None/Null so the app doesn't crash
+    title: Optional[str] = "Untitled Goal" 
+    goal_type: Optional[str] = "General"
     target_amount: float
+    current_amount: float = 0.0
+    monthly_contribution: float = 0.0
     target_date: date
-    monthly_contribution: float
-    status: GoalStatusEnum = GoalStatusEnum.active
+
+    # This fix handles the "date_from_datetime_inexact" error
+    @field_validator('target_date', mode='before')
+    @classmethod
+    def parse_target_date(cls, v):
+        if isinstance(v, datetime):
+            return v.date() # Strip the time (5:30) off the date
+        return v
 
 class GoalCreate(GoalBase):
-    pass # No extra fields needed for creation
+    pass
 
-class GoalResponse(GoalBase):
+class GoalOut(GoalBase):
     id: int
     user_id: int
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

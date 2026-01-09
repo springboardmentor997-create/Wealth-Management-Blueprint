@@ -1,17 +1,21 @@
-from sqlalchemy import Column, Integer, String, Numeric, Date, Enum, ForeignKey, DateTime
-from datetime import datetime
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date, DateTime
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 class Goal(Base):
-    __tablename__ = 'goals'
+    __tablename__ = "goals"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"))
     
-    goal_type = Column(Enum('retirement', 'home', 'education', 'custom', name='goal_type_enum'), nullable=False)
-    target_amount = Column(Numeric(10, 2), nullable=False)
-    target_date = Column(Date, nullable=False)
-    monthly_contribution = Column(Numeric(10, 2), nullable=False)
+    title = Column(String)
+    goal_type = Column(String) # e.g., 'Retirement', 'Home'
+    target_amount = Column(Float)
+    current_amount = Column(Float, default=0.0)
+    monthly_contribution = Column(Float, default=0.0)
+    target_date = Column(Date) # This matches your frontend's 'target_date'
     
-    status = Column(Enum('active', 'paused', 'completed', name='goal_status_enum'), default='active')
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="goals")

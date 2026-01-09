@@ -1,165 +1,246 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authApi } from '../../api/authApi'; 
+import client from '../../api/client'; // Using your base client for direct calls
+import * as portfolioApi from '../../api/portfolioApi'; 
+import * as goalsApi from '../../api/goalsApi';
+import Loader from '../../components/common/Loader';
+import Card from '../../components/common/Card';
+import AssetChart from '../../components/charts/AssetChart'; 
 
-export default function Dashboard() {
+const Dashboard = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    netWorth: 0,
+    totalGain: 0,
+    activeGoals: 0,
+    monthlyCommitment: 0,
+    unallocated: 0,
+    topAssets: [],
+    allAssets: [],
+    nextGoal: null
+  });
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const userData = await authApi.getMe();
-        setUser(userData);
-      } catch (error) {
-        console.error("Failed to fetch user", error);
-        localStorage.removeItem('access_token');
-        navigate('/login');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUser();
-  }, [navigate]);
+    loadDashboardData();
+  }, []);
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <div className="text-blue-600 font-bold text-lg animate-pulse">Loading Wealth Planner...</div>
-    </div>
-  );
+  const loadDashboardData = async () => {
+    try {
+      const [portfolioRes, goalsRes] = await Promise.all([
+        portfolioApi.getPortfolioSummary(),
+        goalsApi.getGoals()
+      ]);
+
+      const pData = portfolioRes.data;
+      const investments = Array.isArray(pData.investments) ? pData.investments : [];
+      
+      let goalsList = [];
+      const gData = goalsRes.data;
+      if (Array.isArray(gData)) goalsList = gData;
+      else if (gData?.goals) goalsList = gData.goals;
+
+      // Calculate logic for Allocation
+      const totalPortfolioValue = pData.current_value || 0;
+      const totalGoalFunding = goalsList.reduce((sum, g) => sum + (g.current_amount || 0), 0);
+      const monthlySum = goalsList.reduce((sum, goal) => sum + (goal.monthly_contribution || 0), 0);
+      
+      const sortedGoals = [...goalsList].sort((a, b) => new Date(a.target_date) - new Date(b.target_date));
+      const upcoming = sortedGoals.length > 0 ? sortedGoals[0] : null;
+
+      setStats({
+        netWorth: totalPortfolioValue,
+        totalGain: pData.total_gain || 0,
+        activeGoals: goalsList.length,
+        monthlyCommitment: monthlySum,
+        unallocated: totalPortfolioValue - totalGoalFunding,
+        topAssets: [...investments].sort((a, b) => b.current_value - a.current_value).slice(0, 4),
+        allAssets: investments,
+        nextGoal: upcoming
+      });
+
+    } catch (error) {
+      console.error("Dashboard Load Failed:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddMoneyToGoal = async (goalId) => {
+  const amount = prompt("Enter amount to allocate to this goal from your portfolio:");
+  
+  // Validation: Ensure it's a positive number
+  if (amount && !isNaN(amount) && parseFloat(amount) > 0) {
+    try {
+      setLoading(true); // 👈 Add this to show the loader while updating
+      
+      const response = await client.post(`/goals/${goalId}/contribute`, { 
+        amount: parseFloat(amount) 
+      });
+      
+      console.log("Allocation Success:", response.data);
+      
+      // 🔄 CRITICAL: Re-fetch all data to recalculate Net Worth and Goal Progress
+      await loadDashboardData(); 
+      
+      alert(`₹${amount} successfully allocated!`);
+    } catch (err) {
+      console.error("Allocation Error:", err);
+      alert("Failed to update goal funding. Check console for details.");
+    } finally {
+      setLoading(false);
+    }
+  } else if (amount) {
+    alert("Please enter a valid positive number.");
+  }
+};
+
+  const formatMoney = (num) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(num || 0);
+  const calculatePercent = (cur, tar) => {
+  const current = parseFloat(cur) || 0;
+  const target = parseFloat(tar) || 0;
+  if (target <= 0) return 0;
+  
+  const rawPercent = (current / target) * 100;
+
+  // If there is progress, but it's very small, show 1 decimal (e.g., 0.4%)
+  if (rawPercent > 0 && rawPercent < 1) {
+    return rawPercent.toFixed(1); 
+  }
+  
+  // Otherwise, round to the nearest whole number
+  return Math.min(Math.round(rawPercent), 100);
+};
+
+  if (loading) return <div className="h-screen flex items-center justify-center bg-[#F8F9FA]"><Loader /></div>;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
+    <div className="p-8 max-w-7xl mx-auto space-y-6 bg-[#F8F9FA] min-h-screen font-sans">
       
-      {/* --- SIDEBAR --- */}
-      <aside className="w-64 bg-slate-900 text-white hidden md:flex flex-col fixed h-full">
-        <div className="p-6">
-          <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
-            WealthPlan
-          </h1>
+      {/* 1. TOP HEADER */}
+      <div className="flex justify-between items-center mb-2">
+        <div>
+          <h1 className="text-2xl font-semibold text-[#202124]">Portfolio Overview</h1>
+          <p className="text-gray-500 text-sm">Welcome back. Here is your financial standing today.</p>
         </div>
+        <div className="flex gap-3">
+            <button onClick={() => navigate('/portfolio/add')} className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:shadow-sm">Add Asset</button>
+            <button onClick={() => navigate('/goals/create')} className="px-4 py-2 bg-[#1A73E8] text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-md">Create Goal</button>
+        </div>
+      </div>
+
+      {/* 2. TOP METRICS - Row 1 */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="p-5 border-none shadow-sm bg-white">
+          <p className="text-gray-500 text-[11px] font-bold uppercase">Total Net Worth</p>
+          <h2 className="text-2xl font-semibold text-gray-900 mt-1">{formatMoney(stats.netWorth)}</h2>
+        </Card>
         
-        <nav className="flex-1 px-4 mt-4 space-y-2">
-          {/* Active Tab */}
-          <div className="flex items-center gap-3 px-4 py-3 bg-blue-600 rounded-xl shadow-lg shadow-blue-900/50 cursor-pointer transition-transform hover:scale-105">
-            <span className="text-lg">📊</span>
-            <span className="font-semibold">Dashboard</span>
+        <Card className="p-5 border-none shadow-sm bg-white">
+          <p className="text-gray-500 text-[11px] font-bold uppercase">Total Unrealized P&L</p>
+          <h2 className={`text-2xl font-semibold mt-1 ${stats.totalGain >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {stats.totalGain >= 0 ? '+' : ''}{formatMoney(stats.totalGain)}
+          </h2>
+        </Card>
+
+        <Card className="p-5 border-none shadow-sm bg-white">
+          <p className="text-gray-500 text-[11px] font-bold uppercase">Unallocated Cash</p>
+          <h2 className="text-2xl font-semibold text-gray-900 mt-1">{formatMoney(stats.unallocated)}</h2>
+          <p className="text-[10px] text-blue-600 font-bold mt-1">Available to assign to goals</p>
+        </Card>
+
+        <Card className="p-5 border-none shadow-sm bg-white">
+          <p className="text-gray-500 text-[11px] font-bold uppercase">Monthly SIP Need</p>
+          <h2 className="text-2xl font-semibold text-gray-900 mt-1">{formatMoney(stats.monthlyCommitment)}</h2>
+        </Card>
+      </div>
+
+      {/* 3. GOAL TRACKER - Row 2 (Strategic Placement) */}
+      {stats.nextGoal && (
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-1 h-full bg-[#1A73E8]"></div>
+          
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+            <div className="flex items-center gap-4">
+              <div className="bg-blue-50 p-3 rounded-lg text-blue-600 font-bold">🎯</div>
+              <div>
+                <h3 className="text-sm font-bold text-gray-900">PRIORITY GOAL: {stats.nextGoal.title}</h3>
+                <p className="text-xs text-gray-400">Targeting {formatMoney(stats.nextGoal.target_amount)} by {new Date(stats.nextGoal.target_date).toLocaleDateString('en-IN', {month: 'long', year: 'numeric'})}</p>
+              </div>
+            </div>
+            
+            <div className="mt-4 md:mt-0 flex items-center gap-6">
+               <div className="text-right">
+                  <span className="text-2xl font-bold text-[#1A73E8]">{calculatePercent(stats.nextGoal.current_amount, stats.nextGoal.target_amount)}%</span>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Funded</p>
+               </div>
+               <button 
+                 onClick={() => handleAddMoneyToGoal(stats.nextGoal.id)}
+                 className="px-4 py-2 bg-gray-900 text-white rounded-lg text-xs font-bold hover:bg-blue-600 transition-colors shadow-lg shadow-gray-200"
+               >
+                 + DISTRIBUTE FUNDS
+               </button>
+            </div>
           </div>
 
-          {/* Inactive Tabs (Placeholders) */}
-          {['Goals', 'Portfolio', 'Simulations', 'Reports'].map((item) => (
-            <div key={item} className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl cursor-pointer transition-colors">
-              <span className="text-lg opacity-50">🔒</span>
-              <span className="font-medium">{item}</span>
-            </div>
-          ))}
-        </nav>
-
-        <div className="p-4 border-t border-slate-800">
-          <button 
-            onClick={() => { localStorage.removeItem('access_token'); window.location.href = '/';}}
-            className="w-full flex items-center justify-center gap-2 text-sm text-red-400 hover:bg-red-900/20 py-3 rounded-lg transition-colors"
-          >
-            <span>🚪</span> Sign Out
-          </button>
-        </div>
-      </aside>
-
-      {/* --- MAIN CONTENT --- */}
-      <main className="flex-1 md:ml-64 p-8">
-        
-        {/* HEADER */}
-        <header className="flex flex-col md:flex-row md:justify-between md:items-center mb-10 gap-4">
-          <div>
-            <h2 className="text-3xl font-bold text-slate-800">Overview</h2>
-            <p className="text-slate-500 mt-1">
-              Good afternoon, <span className="text-blue-600 font-bold text-xl capitalize">{user?.name}</span> 👋
-            </p>
+          {/* Linear Goal Tracker */}
+          <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+             <div 
+               className="bg-[#1A73E8] h-2.5 rounded-full transition-all duration-700 ease-in-out" 
+               style={{ width: `${calculatePercent(stats.nextGoal.current_amount, stats.nextGoal.target_amount)}%` }}
+             ></div>
           </div>
           
-          <div className="flex items-center gap-4">
-            <div className="px-4 py-2 bg-white rounded-full border border-slate-200 shadow-sm text-sm font-medium text-slate-600 flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${user?.kyc_status === 'verified' ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
-              KYC: <span className="uppercase">{user?.kyc_status || 'Pending'}</span>
-            </div>
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold border-2 border-white shadow-sm">
-              {user?.name?.charAt(0).toUpperCase()}
-            </div>
+          <div className="flex justify-between mt-3">
+             <span className="text-[10px] font-bold text-gray-400 uppercase">Allocated: {formatMoney(stats.nextGoal.current_amount)}</span>
+             <span className="text-[10px] font-bold text-gray-400 uppercase text-right">Remaining: {formatMoney(stats.nextGoal.target_amount - stats.nextGoal.current_amount)}</span>
           </div>
-        </header>
+        </div>
+      )}
 
-        {/* DASHBOARD GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-          {/* CARD 1: Net Worth */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-shadow">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <span className="text-6xl">💰</span>
-            </div>
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Net Worth</h3>
-            <div className="mt-4 flex items-baseline gap-2">
-              <span className="text-4xl font-extrabold text-slate-900">$0.00</span>
-              <span className="text-sm text-slate-400 font-medium">USD</span>
-            </div>
-            <div className="mt-4 px-3 py-1 bg-slate-50 rounded-lg text-xs text-slate-500 inline-block border border-slate-200">
-              No assets connected
-            </div>
+      {/* 4. ASSETS & CHART - Row 3 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Asset List */}
+        <Card className="p-6 bg-white border-none shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-base font-bold text-gray-900">Portfolio Breakdown</h3>
+            <button onClick={() => navigate('/portfolio')} className="text-blue-600 text-[11px] font-bold uppercase hover:underline">Full View</button>
           </div>
-
-          {/* CARD 2: Goals */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Financial Goals</h3>
-              <button className="text-blue-600 text-xs font-bold hover:underline">+ New Goal</button>
-            </div>
-            
-            {/* Empty State */}
-            <div className="border-2 border-dashed border-slate-100 rounded-xl p-6 flex flex-col items-center justify-center text-center">
-              <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mb-3">
-                <span className="text-xl">🎯</span>
-              </div>
-              <p className="text-slate-500 text-sm font-medium">No goals set yet</p>
-              <p className="text-slate-400 text-xs mt-1">Start planning your future today.</p>
-            </div>
-          </div>
-
-          {/* CARD 3: Risk Profile */}
-          <div className="bg-gradient-to-br from-slate-800 to-slate-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
-            <div className="absolute -right-10 -top-10 w-40 h-40 bg-blue-500 rounded-full blur-3xl opacity-20"></div>
-            
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Risk Profile</h3>
-            <div className="text-2xl font-bold capitalize text-blue-300 mb-4">
-              {user?.risk_profile || 'Unassessed'}
-            </div>
-            
-            <p className="text-slate-400 text-sm leading-relaxed mb-6">
-              Your profile suggests a balanced allocation between equity and bonds.
-            </p>
-            
-            <button className="w-full py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-sm font-medium transition-colors backdrop-blur-sm">
-              Retake Assessment
-            </button>
-          </div>
-
-          {/* WIDE CARD: Market Data (Placeholder) */}
-          <div className="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-6">Market Trends</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {['S&P 500', 'NASDAQ', 'Gold'].map((market) => (
-                <div key={market} className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex justify-between items-center">
-                  <span className="font-bold text-slate-700">{market}</span>
-                  <div className="flex flex-col items-end">
-                    <span className="text-sm font-mono text-slate-400">Loading...</span>
-                    <span className="text-xs text-green-500 font-medium">Live API</span>
+          <div className="space-y-4">
+            {stats.topAssets.map((asset, i) => (
+              <div key={i} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-xl transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center font-bold text-[11px] text-gray-500 uppercase">
+                    {asset.asset_name.slice(0,2)}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-800 tracking-tight">{asset.asset_name}</p>
+                    <p className="text-[10px] text-gray-400 font-medium uppercase">{asset.category}</p>
                   </div>
                 </div>
-              ))}
-            </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-gray-900">{formatMoney(asset.current_value)}</p>
+                </div>
+              </div>
+            ))}
           </div>
+        </Card>
 
+        {/* Analytics Chart */}
+        <div className="h-full min-h-[350px]">
+          {stats.allAssets.length > 0 ? (
+            <AssetChart assets={stats.allAssets} /> 
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center bg-white rounded-xl border-2 border-dashed border-gray-100 opacity-60">
+               <p className="text-gray-400 text-sm italic">Analytics Visualization Pending Data...</p>
+            </div>
+          )}
         </div>
-      </main>
+      </div>
+
     </div>
   );
-}
+};
+
+export default Dashboard;

@@ -1,20 +1,20 @@
-from sqlalchemy import Column, Integer, String, Numeric, Enum, ForeignKey, DateTime
-from datetime import datetime
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship  # 👈 This import is CRITICAL
 from app.core.database import Base
 
 class Investment(Base):
-    __tablename__ = 'investments'
+    __tablename__ = "investments"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"))  # Links to User table
     
-    asset_type = Column(Enum('stock', 'etf', 'mutual_fund', 'bond', 'cash', name='asset_type_enum'), nullable=False)
-    symbol = Column(String(50), nullable=False)
-    units = Column(Numeric(10, 4), nullable=False)
-    
-    avg_buy_price = Column(Numeric(10, 2), nullable=False)
-    cost_basis = Column(Numeric(12, 2), nullable=False)
-    current_value = Column(Numeric(12, 2), nullable=True)
-    last_price = Column(Numeric(10, 2), nullable=True)
-    
-    last_price_at = Column(DateTime, default=datetime.utcnow)
+    asset_name = Column(String)
+    amount_invested = Column(Float)
+    current_value = Column(Float)
+    category = Column(String)
+    units = Column(Float)
+    date_invested = Column(DateTime(timezone=True), server_default=func.now())
+
+    # 👇 THIS IS THE MISSING PART CAUSING THE ERROR
+    user = relationship("User", back_populates="investments")
