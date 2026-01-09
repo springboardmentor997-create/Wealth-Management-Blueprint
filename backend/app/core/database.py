@@ -1,19 +1,21 @@
 import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base # Updated import for newer SQLAlchemy
+from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 
 load_dotenv()
 
 # 1. Get the URL
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
+raw_url = os.getenv("DATABASE_URL")
 
-# 2. Validate it exists
-if not SQLALCHEMY_DATABASE_URL:
+if not raw_url:
     raise ValueError("DATABASE_URL is not set. Please check Render Environment Variables.")
 
-# 3. 🛠️ FIX: Replace 'postgres://' with 'postgresql://'
-# This is necessary because SQLAlchemy stopped supporting 'postgres://'
+# 2. 🧹 SANITIZE THE INPUT (The Fix)
+# Remove leading/trailing spaces and quotes that might have been pasted in
+SQLALCHEMY_DATABASE_URL = raw_url.strip().strip('"').strip("'")
+
+# 3. Fix the protocol for SQLAlchemy (postgres:// -> postgresql://)
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
@@ -21,7 +23,7 @@ if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
 try:
     engine = create_engine(SQLALCHEMY_DATABASE_URL)
 except Exception as e:
-    print(f"Error creating engine: {e}")
+    print(f"Error creating engine with URL: {SQLALCHEMY_DATABASE_URL}") # Debug print
     raise e
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
