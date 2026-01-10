@@ -6,6 +6,20 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User
+import logging
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
+# Patch bcrypt for passlib compatibility (Fixes AttributeError: module 'bcrypt' has no attribute '__about__')
+import bcrypt
+if not hasattr(bcrypt, '__about__'):
+    try:
+        from collections import namedtuple
+        Version = namedtuple('Version', ['__version__'])
+        bcrypt.__about__ = Version(bcrypt.__version__)
+    except Exception:
+        pass
 
 SECRET_KEY = "your-secret-key-here-change-in-production"
 REFRESH_SECRET_KEY = "your-refresh-secret-key-change-in-production" 
@@ -56,9 +70,11 @@ def verify_token(token: str):
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
         if user_id is None:
+            logger.warning("Token verification failed: No user_id in payload")
             return None
         return {"user_id": user_id}
-    except JWTError:
+    except JWTError as e:
+        logger.warning(f"Token verification failed: {str(e)}")
         return None
 
 def verify_refresh_token(token: str):
