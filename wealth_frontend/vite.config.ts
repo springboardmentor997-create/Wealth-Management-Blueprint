@@ -6,7 +6,7 @@ import path from "path";
 export default defineConfig({
   server: {
     // host: "::", // Commented out to avoid IPv6 issues on Windows
-    port: 5173,
+    port: 8080,
   },
   plugins: [react()],
   resolve: {
