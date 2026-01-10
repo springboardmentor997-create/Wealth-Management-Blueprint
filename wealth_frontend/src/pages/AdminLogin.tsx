@@ -58,73 +58,91 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-destructive/10 p-4">
-      <div className="w-full max-w-md">
-        {/* Back to user login */}
-        <Link 
-          to="/auth" 
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to user login
-        </Link>
-
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-destructive">
-            <Shield className="h-6 w-6 text-destructive-foreground" />
+    <div className="min-h-screen w-full lg:grid lg:grid-cols-2">
+      {/* Visual Side */}
+      <div className="hidden lg:block relative h-full bg-muted">
+        <img
+          src="/images/wealth-theme.jpg"
+          alt="Wealth Management"
+          className="absolute inset-0 h-full w-full object-cover grayscale"
+        />
+        <div className="absolute inset-0 bg-destructive/40 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute bottom-0 left-0 p-12 text-white z-10">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
+              <Shield className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-2xl font-bold">Admin Portal</span>
           </div>
-          <span className="text-2xl font-bold text-foreground">Admin Portal</span>
+          <h2 className="text-3xl font-bold mb-4">System Administration</h2>
+          <p className="text-lg text-white/80 max-w-md">
+            Manage users, monitor system performance, and oversee the WealthTrack platform.
+          </p>
         </div>
+      </div>
 
-        <Card className="border-destructive/20 shadow-xl">
-          <CardHeader className="text-center">
-            <CardTitle>Admin Login</CardTitle>
-            <CardDescription>
-              Access the WealthTrack admin dashboard
-            </CardDescription>
-          </CardHeader>
+      {/* Form Side */}
+      <div className="flex items-center justify-center p-8 bg-background">
+        <div className="w-full max-w-md space-y-6">
+          <Link 
+            to="/auth" 
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors absolute top-8 left-8 lg:static lg:mb-8"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to user login
+          </Link>
 
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="admin-email">Admin Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="admin-email"
-                    type="email"
-                    className="pl-10"
-                    value={loginForm.email}
-                    onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-                  />
+          <div className="flex flex-col items-center gap-2 text-center lg:items-start lg:text-left">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-destructive lg:hidden">
+              <Shield className="h-6 w-6 text-destructive-foreground" />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight">Admin Login</h1>
+            <p className="text-muted-foreground">Enter your admin credentials to continue</p>
+          </div>
+
+          <Card className="border-destructive/20 shadow-xl border-0 shadow-none sm:border sm:shadow-sm">
+            <CardContent className="pt-6">
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="admin-email">Admin Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="admin-email"
+                      type="email"
+                      className="pl-10"
+                      value={loginForm.email}
+                      onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                    />
+                  </div>
+                  {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
                 </div>
-                {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="admin-password">Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="admin-password"
-                    type="password"
-                    placeholder="••••••••"
-                    className="pl-10"
-                    value={loginForm.password}
-                    onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="admin-password">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="admin-password"
+                      type="password"
+                      placeholder="••••••••"
+                      className="pl-10"
+                      value={loginForm.password}
+                      onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                    />
+                  </div>
+                  {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
                 </div>
-                {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
-              </div>
 
-              <Button type="submit" className="w-full bg-destructive hover:bg-destructive/90" disabled={isLoading}>
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Sign In as Admin
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                <Button type="submit" className="w-full bg-destructive hover:bg-destructive/90" disabled={isLoading}>
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Sign In as Admin
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

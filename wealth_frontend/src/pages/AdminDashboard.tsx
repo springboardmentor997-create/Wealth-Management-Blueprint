@@ -39,10 +39,20 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Admin Header */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="relative border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50 overflow-hidden">
+        {/* Header Background */}
+        <div className="absolute inset-0 z-0">
+           <img 
+              src="/images/wealth-theme.jpg" 
+              className="w-full h-full object-cover opacity-5" 
+              alt="Background"
+           />
+           <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/80 to-background/50" />
+        </div>
+
+        <div className="container relative z-10 mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/20">
               <Shield className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
@@ -50,7 +60,7 @@ export default function AdminDashboard() {
               <p className="text-sm text-muted-foreground">WealthTrack Management</p>
             </div>
           </div>
-          <Button variant="outline" onClick={handleSignOut} className="gap-2">
+          <Button variant="outline" onClick={handleSignOut} className="gap-2 hover:bg-destructive hover:text-destructive-foreground transition-colors">
             <LogOut className="h-4 w-4" />
             Sign Out
           </Button>
