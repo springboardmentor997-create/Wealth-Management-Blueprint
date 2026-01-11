@@ -12,8 +12,12 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { apiClient } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
-import { User, Shield, Bell, Palette, Lock, CheckCircle2, Loader2 } from 'lucide-react';
+import { User as UserIcon, Shield, Bell, Palette, Lock, CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -25,6 +29,18 @@ const Settings = () => {
   const [riskLoading, setRiskLoading] = useState(false);
   const [photoLoading, setPhotoLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  
+  // KYC State
+  const [kycDialogOpen, setKycDialogOpen] = useState(false);
+  const [kycLoading, setKycLoading] = useState(false);
+  const [kycData, setKycData] = useState({
+      full_name: '',
+      dob: '',
+      document_type: 'pan',
+      document_number: '',
+      address: ''
+  });
+  const [kycFile, setKycFile] = useState<File | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -166,6 +182,50 @@ const Settings = () => {
     });
   };
 
+  const handleKYCSubmit = async () => {
+      if (!kycData.full_name || !kycData.dob || !kycData.document_number || !kycData.address) {
+          toast({
+              title: "Missing fields",
+              description: "Please fill in all required fields",
+              variant: "destructive"
+          });
+          return;
+      }
+
+      setKycLoading(true);
+      const formData = new FormData();
+      formData.append('full_name', kycData.full_name);
+      formData.append('dob', kycData.dob);
+      formData.append('document_type', kycData.document_type);
+      formData.append('document_number', kycData.document_number);
+      formData.append('address', kycData.address);
+      if (kycFile) {
+          formData.append('document_proof', kycFile);
+      }
+
+      const { data, error } = await apiClient.submitKYC(formData);
+      setKycLoading(false);
+
+      if (error) {
+          toast({
+              title: "KYC Submission Failed",
+              description: error.message,
+              variant: "destructive"
+          });
+      } else {
+          toast({
+              title: "KYC Submitted",
+              description: "Your document verification is pending.",
+          });
+          setKycDialogOpen(false);
+          // Refresh user data is needed, or optimistically update
+          // Since updateProfile implementation in api.ts doesn't refresh fully, we might need to manually trigger context refresh or just update user object locally if possible
+          // But here we rely on page reload or the fact that context usually listens to changes if implemented well. 
+          // `updateUser` from useAuth takes a Partial<User> often.
+          updateUser({ ...user, kyc_status: 'pending' });
+      }
+  };
+
   const handleSave = async (section: 'profile' | 'risk') => {
     if (section === 'profile') setProfileLoading(true);
     else setRiskLoading(true);
@@ -211,7 +271,7 @@ const Settings = () => {
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList className="grid w-full max-w-xl grid-cols-4">
             <TabsTrigger value="profile" className="gap-2">
-              <User className="h-4 w-4" />
+              <UserIcon className="h-4 w-4" />
               Profile
             </TabsTrigger>
             <TabsTrigger value="risk" className="gap-2">
@@ -307,8 +367,13 @@ const Settings = () => {
                           : "Please complete verification to unlock all features."}
                       </p>
                     </div>
-                    {user.kyc_status !== 'verified' && (
-                      <Button variant="outline" size="sm" className="ml-auto">Verify</Button>
+                    {user.kyc_status !== 'verified' && user.kyc_status !== 'pending' && (
+                      <Button variant="outline" size="sm" className="ml-auto" onClick={() => setKycDialogOpen(true)}>
+                        Verify
+                      </Button>
+                    )}
+                    {user.kyc_status === 'pending' && (
+                        <Badge variant="outline" className="ml-auto bg-yellow-50 text-yellow-600 border-yellow-200">Pending Review</Badge>
                     )}
                   </div>
                 </CardContent>
@@ -444,6 +509,89 @@ const Settings = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        <Dialog open={kycDialogOpen} onOpenChange={setKycDialogOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Complete KYC Verification</DialogTitle>
+                    <DialogDescription>
+                        Submit your details for identity verification.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="kyc-name">Full Name</Label>
+                        <Input 
+                            id="kyc-name" 
+                            value={kycData.full_name}
+                            onChange={(e) => setKycData({...kycData, full_name: e.target.value})}
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="kyc-dob">Date of Birth</Label>
+                        <Input 
+                            id="kyc-dob" 
+                            type="date"
+                            value={kycData.dob}
+                            onChange={(e) => setKycData({...kycData, dob: e.target.value})}
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label>Document Type</Label>
+                        <RadioGroup 
+                            defaultValue="pan" 
+                            value={kycData.document_type}
+                            onValueChange={(val) => setKycData({...kycData, document_type: val})}
+                            className="flex gap-4"
+                        >
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="pan" id="r1" />
+                                <Label htmlFor="r1">PAN</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="aadhaar" id="r2" />
+                                <Label htmlFor="r2">Aadhaar</Label>
+                            </div>
+                             <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="other" id="r3" />
+                                <Label htmlFor="r3">Other</Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="kyc-doc-num">Document Number</Label>
+                        <Input 
+                            id="kyc-doc-num" 
+                            value={kycData.document_number}
+                            onChange={(e) => setKycData({...kycData, document_number: e.target.value})}
+                        />
+                    </div>
+                     <div className="grid gap-2">
+                        <Label htmlFor="kyc-address">Address</Label>
+                        <Textarea 
+                            id="kyc-address" 
+                            value={kycData.address}
+                            onChange={(e) => setKycData({...kycData, address: e.target.value})}
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="kyc-file">ID Proof (Optional)</Label>
+                        <Input 
+                            id="kyc-file" 
+                            type="file"
+                            onChange={(e) => setKycFile(e.target.files?.[0] || null)}
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setKycDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleKYCSubmit} disabled={kycLoading}>
+                        {kycLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Submit Verification
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );

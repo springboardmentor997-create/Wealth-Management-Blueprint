@@ -111,8 +111,20 @@ def check_and_generate_notifications(db: Session, user: User):
                 except ValueError:
                     pass # Date parsing error
 
-    # 2. Check KYC Status
-    if user.kyc_status != "verified":
+    # 2. Check KYC Status - and Cleanup if verified
+    if user.kyc_status == "verified":
+         # Auto-resolve KYC notifications if user is now verified
+        kyc_notifs = db.query(Notification).filter(
+            Notification.user_id == user.id,
+            Notification.title == "Complete your KYC",
+            Notification.is_read == "false"
+        ).all()
+        for n in kyc_notifs:
+            n.is_read = "true"
+        if kyc_notifs:
+            db.commit()
+
+    elif user.kyc_status != "verified":
         title = "Complete your KYC"
         msg = "Your account is not fully verified. Complete KYC to unlock all features."
         exists = db.query(Notification).filter(

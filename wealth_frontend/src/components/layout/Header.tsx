@@ -30,13 +30,27 @@ export function Header() {
   const initials = userName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
   useEffect(() => {
-    fetchNotifications();
-    // Optional: Poll for notifications every minute
-    const interval = setInterval(fetchNotifications, 60000);
-    return () => clearInterval(interval);
-  }, []);
+    if (user) {
+      fetchNotifications();
+      // Poll for notifications every minute
+      const interval = setInterval(fetchNotifications, 60000);
+      
+      // Listen for updates from other components (like Notifications page)
+      const handleUpdate = () => fetchNotifications();
+      window.addEventListener('notifications:updated', handleUpdate);
+
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('notifications:updated', handleUpdate);
+      };
+    } else {
+      setNotifications([]);
+      setUnreadCount(0);
+    }
+  }, [user]);
 
   const fetchNotifications = async () => {
+    if (!user) return;
     try {
       const data = await notificationService.getNotifications();
       setNotifications(data);

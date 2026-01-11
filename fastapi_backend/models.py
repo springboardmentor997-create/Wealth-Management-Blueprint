@@ -30,6 +30,25 @@ class User(Base):
     simulations = relationship("Simulation", back_populates="user", cascade="all, delete-orphan")
     reports = relationship("Report", back_populates="user", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
+    kyc_request = relationship("KYCRequest", back_populates="user", uselist=False, cascade="all, delete-orphan")
+
+class KYCRequest(Base):
+    __tablename__ = "kyc_requests"
+
+    id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, unique=True)
+    full_name = Column(String, nullable=False)
+    dob = Column(String, nullable=False)
+    document_type = Column(String, nullable=False) # PAN, Aadhaar
+    document_number = Column(String, nullable=False)
+    address = Column(Text, nullable=False)
+    document_proof_url = Column(String, nullable=True) # URL/path to uploaded file
+    status = Column(String, default="pending") # pending, verified, rejected
+    admin_comments = Column(Text, nullable=True)
+    submitted_at = Column(DateTime, default=datetime.utcnow)
+    verified_at = Column(DateTime, nullable=True)
+
+    user = relationship("User", back_populates="kyc_request")
 
 class Notification(Base):
     __tablename__ = "notifications"

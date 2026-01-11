@@ -32,7 +32,8 @@ async def get_recommendations(current_user: User = Depends(get_current_user), db
             title="Set Your First Financial Goal",
             description="You haven't set any financial goals yet. Defining clear goals (like Retirement, Home, or Vacation) helps track progress.",
             priority="high",
-            expected_impact="Improved tracking & discipline"
+            expected_impact="Improved tracking & discipline",
+            action_link="/goals"
         ))
     
     # 2. Portfolio Logic (only if they have investments)
@@ -62,7 +63,8 @@ async def get_recommendations(current_user: User = Depends(get_current_user), db
                 title="Build Emergency Fund",
                 description="Your cash allocation is very low (< 5%). Consider keeping 3-6 months of expenses in liquid funds.",
                 priority="high",
-                expected_impact="Financial Stability"
+                expected_impact="Financial Stability",
+                action_link="/portfolio"
             ))
             
         # Rule: Idle Cash
@@ -72,7 +74,8 @@ async def get_recommendations(current_user: User = Depends(get_current_user), db
                 title="Deploy Idle Cash",
                 description=f"You have {round(cash_pct)}% in cash. Inflation eats into your purchasing power. Consider investing based on your profile.",
                 priority="medium",
-                expected_impact="Better Inflation-adjusted Returns"
+                expected_impact="Better Inflation-adjusted Returns",
+                action_link="/portfolio"
             ))
 
         # Rule: Risk Profile Alignment
@@ -83,7 +86,8 @@ async def get_recommendations(current_user: User = Depends(get_current_user), db
                     title="Increase Equity Exposure",
                     description="Your profile is Aggressive, but your equity exposure is low. Increase stock/fund allocation to maximize growth.",
                     priority="medium",
-                    expected_impact="+2-4% Potential Long-term Return"
+                    expected_impact="+2-4% Potential Long-term Return",
+                    action_link="/portfolio"
                 ))
         elif risk_profile == "conservative":
             if equity_pct > 30:
@@ -92,7 +96,8 @@ async def get_recommendations(current_user: User = Depends(get_current_user), db
                     title="Reduce Risk Exposure",
                     description="Your profile is Conservative, but you have high equity exposure. Consider checking debt/bond funds.",
                     priority="high",
-                    expected_impact="Capital Preservation"
+                    expected_impact="Capital Preservation",
+                    action_link="/portfolio"
                 ))
 
         # Rule: Diversification (Simple check on number of holdings)
@@ -102,7 +107,8 @@ async def get_recommendations(current_user: User = Depends(get_current_user), db
                 title="Diversify Portfolio",
                 description="Your portfolio is concentrated in very few assets. Add more instruments to spread risk.",
                 priority="medium",
-                expected_impact="Lower Volatility"
+                expected_impact="Lower Volatility",
+                action_link="/portfolio"
             ))
 
     # If no recommendations triggered (e.g. perfect portfolio), give a kudos
@@ -112,7 +118,8 @@ async def get_recommendations(current_user: User = Depends(get_current_user), db
             title="Portfolio Looks Healthy",
             description="Your current allocation aligns well with your risk profile. Keep monitoring your goals.",
             priority="low",
-            expected_impact="Maintenance"
+            expected_impact="Maintenance",
+            action_link="/reports"
         ))
         
     # Check if empty (new user)
@@ -122,7 +129,8 @@ async def get_recommendations(current_user: User = Depends(get_current_user), db
             title="Start Investing",
             description="You have no investments recorded. Start by adding your first investment to track your wealth.",
             priority="high",
-            expected_impact="Wealth Creation"
+            expected_impact="Wealth Creation",
+            action_link="/portfolio"
         ))
 
     return recommendations

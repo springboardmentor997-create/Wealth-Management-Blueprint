@@ -59,9 +59,11 @@ class ApiClient {
 
       if (!response.ok) {
         if (response.status === 401 || (response.status === 403 && response.statusText === 'Forbidden')) {
-          // Handle both 401 Unauthorized and 403 Forbidden (often used for missing auth in FastAPI)
+          // Handle both 401 Unauthorized and 403 Forbidden
           this.clearToken(); // Clear invalid token immediately
           window.dispatchEvent(new Event('auth:unauthorized'));
+          // Return a specific error structure that we can ignore or handle gracefully
+          throw new Error('Invalid authentication credentials'); 
         }
 
         let errorData;
@@ -82,7 +84,12 @@ class ApiClient {
       console.log('API Success Response:', data);
       return data;
     } catch (error: any) {
-      console.error('API Request Failed:', error);
+      if (error.message === 'Invalid authentication credentials') {
+         // Suppress logs for expected auth errors (handled by event)
+         console.warn('Authentication expired or invalid');
+      } else {
+         console.error('API Request Failed:', error);
+      }
       throw error;
     }
   }
@@ -266,17 +273,37 @@ class ApiClient {
     }
   }
 
-  async updatePassword(data: any) {
-    try {
-      const result = await this.request<any>('/api/auth/password', {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      });
-      return { data: result, error: null };
-    } catch (error) {
-      return { data: null, error: error as Error };
+    async submitKYC(data: FormData) {
+        try {
+            const headers = this.getHeaders();
+            delete (headers as any)['Content-Type'];
+            
+            const response = await fetch(`${this.baseURL}/kyc/submit`, {
+                method: 'POST',
+                headers: headers,
+                body: data
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+                throw new Error(errorData.detail || 'KYC submission failed');
+            }
+
+            const result = await response.json();
+            return { data: result, error: null };
+        } catch (error) {
+            return { data: null, error: error as Error };
+        }
     }
-  }
+
+    async getKYCStatus() {
+        try {
+            const data = await this.get<any>('/kyc/status');
+            return { data, error: null };
+        } catch (error) {
+            return { data: null, error: error as Error };
+        }
+    }
 
   // Portfolio methods
   async getPortfolioSummary() {

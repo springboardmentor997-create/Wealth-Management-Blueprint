@@ -33,7 +33,7 @@ def get_current_user(
 
 def get_admin_user(current_user: User = Depends(get_current_user)):
     # Check if is_admin is explicitly "true" (case-insensitive)
-    is_admin = str(current_user.is_admin or "").lower()
+    is_admin = str(current_user.is_admin or "").lower().strip()
     if is_admin != "true":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

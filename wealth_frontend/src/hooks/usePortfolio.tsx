@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '@/services/api';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Investment {
   id: string;
@@ -41,26 +42,40 @@ export function usePortfolio() {
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
   const [history, setHistory] = useState<PortfolioHistoryPoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   const fetchPortfolio = async () => {
+    if (!user) {
+        setLoading(false);
+        return;
+    }
     setLoading(true);
-    const [invRes, transRes, sumRes, histRes] = await Promise.all([
-      apiClient.getInvestments(),
-      apiClient.getTransactions(),
-      apiClient.getPortfolioSummary(),
-      apiClient.getPortfolioHistory('6mo'),
-    ]);
+    try {
+        const [invRes, transRes, sumRes, histRes] = await Promise.all([
+        apiClient.getInvestments(),
+        apiClient.getTransactions(),
+        apiClient.getPortfolioSummary(),
+        apiClient.getPortfolioHistory('6mo'),
+        ]);
 
-    if (invRes.data) setInvestments(invRes.data);
-    if (transRes.data) setTransactions(transRes.data);
-    if (sumRes.data) setSummary(sumRes.data);
-    if (histRes.data) setHistory(histRes.data);
-    setLoading(false);
+        if (invRes.data) setInvestments(invRes.data);
+        if (transRes.data) setTransactions(transRes.data);
+        if (sumRes.data) setSummary(sumRes.data);
+        if (histRes.data) setHistory(histRes.data);
+    } catch (error) {
+        console.error("Error fetching portfolio:", error);
+    } finally {
+        setLoading(false);
+    }
   };
 
   useEffect(() => {
-    fetchPortfolio();
-  }, []);
+    if (user) {
+        fetchPortfolio();
+    } else {
+        setLoading(false);
+    }
+  }, [user]);
 
   const addInvestment = async (data: any) => {
     const { data: newInv, error } = await apiClient.addInvestment(data);

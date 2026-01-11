@@ -339,6 +339,25 @@ export function UsersTab() {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-risk">Risk Profile</Label>
+                <Select
+                  value={editingUser.risk_profile}
+                  onValueChange={(value) => 
+                    setEditingUser({ ...editingUser, risk_profile: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="conservative">Conservative</SelectItem>
+                    <SelectItem value="moderate">Moderate</SelectItem>
+                    <SelectItem value="aggressive">Aggressive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
 

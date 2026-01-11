@@ -11,9 +11,10 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 
 from database import get_db
-from models import User, Goal, Investment, Transaction
+from models import User, Goal, Investment, Transaction, KYCRequest
 from schemas import User as UserSchema, AdminUserUpdate, CreditUpdate, AdminDashboardData, AdminUserView
 from dependencies import get_admin_user
+from datetime import datetime
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -230,8 +231,36 @@ async def get_admin_dashboard(
             "timestamp": inv.created_at
         })
     
-    # 5. Combine and Sort
-    all_activities = user_activities + goal_activities + txn_activities + inv_activities
+    # 5. KYC Activities
+    recent_kyc = db.query(KYCRequest).order_by(KYCRequest.submitted_at.desc()).limit(15).all()
+    kyc_activities = []
+    for k in recent_kyc:
+         user_name = "Unknown"
+         if k.user:
+             user_name = k.user.name
+         elif k.user_id:
+             u = db.query(User).filter(User.id == k.user_id).first()
+             if u: user_name = u.name
+         
+         status_label = k.status
+         if status_label == 'pending':
+             action = "KYC Submitted"
+         else:
+             action = f"KYC {status_label.title()}"
+
+         kyc_activities.append({
+            "id": f"kyc-{k.id}", 
+            "user_id": str(k.user_id), 
+            "user_name": user_name, 
+            "action": action, 
+            "category": "auth",
+            "details": f"{k.document_type}", 
+            "timestamp": k.submitted_at,
+            "document_url": k.document_proof_url
+        })
+
+    # 6. Combine and Sort
+    all_activities = user_activities + goal_activities + txn_activities + inv_activities + kyc_activities
     # Filter out None timestamps if any
     all_activities = [a for a in all_activities if a['timestamp'] is not None]
     all_activities.sort(key=lambda x: x['timestamp'], reverse=True)
@@ -273,6 +302,15 @@ async def update_user(
         raise HTTPException(status_code=404, detail="User not found")
     
     update_dict = user_data.dict(exclude_unset=True)
+    
+    # Sync KYC Request status if kyc_status is updated
+    if 'kyc_status' in update_dict:
+        kyc_req = db.query(KYCRequest).filter(KYCRequest.user_id == user_id).first()
+        if kyc_req:
+            kyc_req.status = update_dict['kyc_status']
+            if update_dict['kyc_status'] == 'verified':
+                kyc_req.verified_at = datetime.utcnow()
+    
     for key, value in update_dict.items():
         if hasattr(user, key):
             setattr(user, key, value)

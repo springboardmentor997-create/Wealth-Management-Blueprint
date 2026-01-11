@@ -18,7 +18,9 @@ const Notifications = () => {
     try {
       setLoading(true);
       const data = await notificationService.getNotifications();
-      setNotifications(data);
+      // "Vanish" means we only show unread items.
+      // We check !== 'true' to be robust against "false" vs false, and default to showing if unsure.
+      setNotifications(data.filter(n => String(n.is_read) !== 'true'));
     } catch (error) {
       console.error("Failed to fetch notifications", error);
     } finally {
@@ -29,9 +31,11 @@ const Notifications = () => {
   const handleMarkAsRead = async (id: string) => {
     try {
       await notificationService.markAsRead(id);
-      setNotifications(prev => prev.map(n => 
-        n.id === id ? { ...n, is_read: 'true' } : n
-      ));
+      // Remove from list immediately to make it "vanish"
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      
+       // Emit event to update header badge count if needed
+       window.dispatchEvent(new Event('notifications:updated'));
     } catch (error) {
       console.error("Failed to mark as read", error);
     }

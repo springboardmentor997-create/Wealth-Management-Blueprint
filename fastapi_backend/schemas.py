@@ -67,6 +67,34 @@ class UserUpdate(BaseModel):
     kyc_status: Optional[str] = None
     profile_picture: Optional[str] = None
 
+class KYCCreate(BaseModel):
+    full_name: str
+    dob: str
+    document_type: str
+    document_number: str
+    address: str
+
+class KYCResponse(BaseModel):
+    id: str
+    user_id: str
+    full_name: str
+    dob: str
+    document_type: str
+    document_number: str
+    address: str
+    document_proof_url: Optional[str] = None
+    status: str
+    admin_comments: Optional[str] = None
+    submitted_at: datetime
+    verified_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class KYCStatusUpdate(BaseModel):
+    status: str # verified, rejected
+    admin_comments: Optional[str] = None
+
 class AdminUserUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
@@ -220,6 +248,7 @@ class Recommendation(BaseModel):
     description: str
     priority: str
     expected_impact: str
+    action_link: Optional[str] = None
 
 # Market Schemas
 class MarketIndex(BaseModel):
@@ -266,6 +295,7 @@ class ActivityLogItem(BaseModel):
     category: str
     details: str
     timestamp: datetime
+    document_url: Optional[str] = None
 
 class AdminDashboardData(BaseModel):
     total_users: int

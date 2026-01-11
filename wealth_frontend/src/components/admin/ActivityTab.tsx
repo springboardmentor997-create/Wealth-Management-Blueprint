@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, User, Target, Briefcase, Settings, Calculator, Shield, Loader2 } from 'lucide-react';
+import { Search, User, Target, Briefcase, Settings, Calculator, Shield, Loader2, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/services/api';
@@ -17,7 +18,11 @@ interface ActivityLogItem {
   category: string;
   details: string;
   timestamp: string;
+  document_url?: string;
 }
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 
 const categoryIcons: Record<string, React.ReactNode> = {
   auth: <Shield className="h-4 w-4" />,
@@ -138,6 +143,17 @@ export function ActivityTab() {
                   <span>{formatTimestamp(log.timestamp)}</span>
                 </div>
               </div>
+              
+              {log.document_url && (
+                <Button
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => window.open(`${API_BASE_URL}${log.document_url}`, '_blank')}
+                  title="View Document"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           ))}
         </div>

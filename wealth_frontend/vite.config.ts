@@ -5,8 +5,8 @@ import path from "path";
 // https://vitejs.dev/config/
 export default defineConfig({
   server: {
-    // host: "::", // Commented out to avoid IPv6 issues on Windows
-    port: 8080,
+    port: 5173,
+    host: true, // Listen on all local IPs
   },
   plugins: [react()],
   resolve: {

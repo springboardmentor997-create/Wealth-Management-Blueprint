@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/services/api';
@@ -14,6 +15,7 @@ interface Recommendation {
   description: string;
   priority: 'high' | 'medium' | 'low';
   expected_impact: string;
+  action_link?: string;
 }
 
 interface RebalanceRec {
@@ -24,6 +26,7 @@ interface RebalanceRec {
 }
 
 const Recommendations = () => {
+  const navigate = useNavigate();
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [rebalanceRecs, setRebalanceRecs] = useState<RebalanceRec[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,8 +52,8 @@ const Recommendations = () => {
   }, []);
 
   const handleApplyAll = () => {
-    // In a real app, this would call an API endpoint
-    alert("Applying all recommended changes to your portfolio...");
+    // Navigate to transaction page to let user execute trades
+    navigate('/portfolio');
   };
 
   if (loading) {
@@ -79,7 +82,7 @@ const Recommendations = () => {
               Strategic Insights
             </h2>
             {recommendations.map((rec) => (
-              <Card key={rec.id}>
+              <Card key={rec.id} className="flex flex-col">
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-base">{rec.title}</CardTitle>
@@ -89,14 +92,32 @@ const Recommendations = () => {
                   </div>
                   <CardDescription>{rec.description}</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Expected Impact:</span>
                     <span className="font-medium text-green-600">{rec.expected_impact}</span>
                   </div>
                 </CardContent>
+                {rec.action_link && (
+                    <CardFooter className="pt-0">
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="w-full gap-2"
+                            onClick={() => navigate(rec.action_link!)}
+                        >
+                            Take Action <ArrowRight className="h-4 w-4" />
+                        </Button>
+                    </CardFooter>
+                )}
               </Card>
             ))}
+            {recommendations.length === 0 && (
+                 <div className="text-center p-8 text-muted-foreground border rounded-lg bg-muted/20">
+                    <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-green-500" />
+                    <p>No actionable insights needed. You're doing great!</p>
+                 </div>
+            )}
           </div>
 
           {/* Rebalancing */}
