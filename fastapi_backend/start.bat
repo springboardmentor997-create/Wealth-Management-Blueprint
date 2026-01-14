@@ -20,7 +20,7 @@ pip install -r requirements.txt
 REM Start the FastAPI server with Swagger enabled
 echo.
 echo Starting FastAPI server...
-echo Swagger UI will be available at: http://localhost:8000/docs
-echo ReDoc will be available at: http://localhost:8000/redoc
+echo Swagger UI will be available at: http://localhost:8080/docs
+echo ReDoc will be available at: http://localhost:8080/redoc
 echo.
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload --host 0.0.0.0 --port 8080

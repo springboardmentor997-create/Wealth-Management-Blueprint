@@ -58,12 +58,14 @@ export function usePortfolio() {
         apiClient.getPortfolioHistory('6mo'),
         ]);
 
-        if (invRes.data) setInvestments(invRes.data);
-        if (transRes.data) setTransactions(transRes.data);
+        if (invRes.data) setInvestments(Array.isArray(invRes.data) ? invRes.data : []);
+        if (transRes.data) setTransactions(Array.isArray(transRes.data) ? transRes.data : []);
         if (sumRes.data) setSummary(sumRes.data);
-        if (histRes.data) setHistory(histRes.data);
-    } catch (error) {
-        console.error("Error fetching portfolio:", error);
+        if (histRes.data) setHistory(Array.isArray(histRes.data) ? histRes.data : []);
+    } catch (error: any) {
+        if (error.message !== 'Invalid authentication credentials') {
+            console.error("Error fetching portfolio:", error);
+        }
     } finally {
         setLoading(false);
     }

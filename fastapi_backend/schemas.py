@@ -44,8 +44,13 @@ class UserCreate(BaseModel):
     
     @validator('password')
     def validate_password(cls, v):
-        if len(v.encode('utf-8')) > 72:
-            raise ValueError('Password too long (max 72 bytes)')
+        if not isinstance(v, str):
+            v = str(v)
+        if len(v) < 1:
+            raise ValueError('Password cannot be empty')
+        password_bytes = v.encode('utf-8')
+        if len(password_bytes) > 72:
+            raise ValueError('Password cannot be longer than 72 bytes')
         return v
 
 class UserPasswordUpdate(BaseModel):
@@ -340,7 +345,9 @@ class ReportFileResponse(BaseModel):
 
 # Dashboard Schema
 class DashboardData(BaseModel):
-    total_balance: float
-    total_investments: float
+    total_portfolio_value: float
     total_goals: int
+    active_goals: int
+    total_investments: int
     recent_transactions: Optional[List[dict]] = []
+    portfolio_performance: dict

@@ -124,15 +124,27 @@ const Simulations = () => {
     if (error) {
       toast({
         title: "Simulation failed",
-        description: error.message,
+        description: error.message || "An error occurred. Please try again.",
         variant: "destructive",
       });
-    } else if (data) {
-      setProjectionData(data.results.projection_data);
-      setSimulationResult(data.results);
-      setShowResults(true);
+      setIsRunning(false);
+      return;
     }
     
+    // Backend returns data directly (not nested under results)
+    if (!data || !data.projection_data) {
+      toast({
+        title: "Simulation failed",
+        description: "No data returned from server. Please check your inputs or try again later.",
+        variant: "destructive",
+      });
+      setIsRunning(false);
+      return;
+    }
+    
+    setProjectionData(data.projection_data);
+    setSimulationResult(data);
+    setShowResults(true);
     setIsRunning(false);
   };
 

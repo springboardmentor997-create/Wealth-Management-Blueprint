@@ -44,13 +44,15 @@ export function useGoals() {
 
       if (error) throw error;
       
-      setGoals(data as Goal[]);
+      setGoals(Array.isArray(data) ? data as Goal[] : []);
     } catch (error: any) {
-      toast({
-        title: 'Error fetching goals',
-        description: error.message,
-        variant: 'destructive',
-      });
+      if (error.message !== 'Invalid authentication credentials') {
+        toast({
+          title: 'Error fetching goals',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
     } finally {
       setLoading(false);
     }

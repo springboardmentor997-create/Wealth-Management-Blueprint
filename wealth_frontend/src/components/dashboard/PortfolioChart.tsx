@@ -48,7 +48,7 @@ export function PortfolioChart() {
             />
             <Tooltip
               content={({ active, payload }) => {
-                if (active && payload && payload.length) {
+                if (active && payload && payload.length && payload[0]?.value != null) {
                   return (
                     <div className="rounded-lg bg-popover border border-border px-3 py-2 shadow-lg">
                       <p className="text-sm font-medium">

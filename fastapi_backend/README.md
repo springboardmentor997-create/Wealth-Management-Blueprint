@@ -26,18 +26,18 @@ ACCESS_TOKEN_EXPIRE_MINUTES=1440
 ### 3. Run the Application
 ```bash
 # Start FastAPI server
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload --host 0.0.0.0 --port 8080
 
 # Or use the batch file (Windows)
 start.bat
 ```
 
 ### 4. API Documentation
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- Swagger UI: http://localhost:8080/docs
+- ReDoc: http://localhost:8080/redoc
 
 ### 5. Seed Test Data
-POST to http://localhost:8000/api/auth/seed to create test users:
+POST to http://localhost:8080/api/auth/seed to create test users:
 - Admin: admin@wealth.com / admin123
 - User: john.doe@gmail.com / password123
 

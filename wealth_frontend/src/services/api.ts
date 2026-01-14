@@ -1,11 +1,40 @@
-const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8000';
+const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8080';
+// Helper to store JWT
+function storeToken(token: string) {
+  if (token) {
+    localStorage.setItem('auth_token', token);
+  }
+}
+
+export async function register(email: string, password: string, name?: string) {
+  const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, name }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || 'Registration failed');
+  return data;
+}
+
+export async function login(email: string, password: string) {
+  const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || 'Login failed');
+  if (data.token) storeToken(data.token);
+  return data;
+}
 
 class ApiClient {
   private baseURL: string;
   private token: string | null = null;
 
   constructor(baseURL: string) {
-    this.baseURL = typeof baseURL === 'string' ? baseURL : 'http://localhost:8000';
+    this.baseURL = typeof baseURL === 'string' ? baseURL : 'http://localhost:8080';
     this.token = localStorage.getItem('auth_token');
   }
 
@@ -42,6 +71,23 @@ class ApiClient {
       },
     };
 
+    // Timeout wrapper
+    const fetchWithTimeout = (resource: RequestInfo, options: RequestInit = {}): Promise<Response> => {
+      const { timeout = 30000 } = (options as Record<string, number>); // 30s default (increased from 15s to accommodate slow auth/DB queries)
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('Request timed out')), timeout);
+        fetch(resource, options)
+          .then(response => {
+            clearTimeout(timer);
+            resolve(response);
+          })
+          .catch(err => {
+            clearTimeout(timer);
+            reject(err);
+          });
+      });
+    };
+
     console.log('API Request:', {
       url,
       method: config.method || 'GET',
@@ -50,7 +96,7 @@ class ApiClient {
     });
 
     try {
-      const response = await fetch(url, config);
+      const response = await fetchWithTimeout(url, config);
       
       console.log('API Response:', {
         status: response.status,
@@ -83,8 +129,8 @@ class ApiClient {
       const data = await response.json();
       console.log('API Success Response:', data);
       return data;
-    } catch (error: any) {
-      if (error.message === 'Invalid authentication credentials') {
+    } catch (error: unknown) {
+      if ((error as Error).message === 'Invalid authentication credentials') {
          // Suppress logs for expected auth errors (handled by event)
          console.warn('Authentication expired or invalid');
       } else {
@@ -120,7 +166,7 @@ class ApiClient {
 
   async uploadProfileImage(file: File) {
     try {
-      const user = await this.uploadFile<any>('/api/auth/profile/image', file);
+      const user = await this.uploadFile<Record<string, unknown>>('/api/auth/profile/image', file);
       return { data: user, error: null };
     } catch (error) {
       return { data: null, error: error as Error };
@@ -132,7 +178,7 @@ class ApiClient {
     return this.request<T>(endpoint, { ...options, method: 'GET' });
   }
 
-  async post<T>(endpoint: string, body: any, options: RequestInit = {}): Promise<T> {
+  async post<T>(endpoint: string, body: Record<string, unknown>, options: RequestInit = {}): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
@@ -140,7 +186,7 @@ class ApiClient {
     });
   }
 
-  async put<T>(endpoint: string, body?: any, options: RequestInit = {}): Promise<T> {
+  async put<T>(endpoint: string, body?: Record<string, unknown>, options: RequestInit = {}): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
@@ -171,7 +217,7 @@ class ApiClient {
 
   async signIn(email: string, password: string) {
     try {
-      const response = await this.request<{ user: any; token: string }>('/api/auth/login', {
+      const response = await this.request<{ user: Record<string, unknown>; token: string }>('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
@@ -202,7 +248,7 @@ class ApiClient {
 
   async getCurrentUser() {
     try {
-      const user = await this.request<any>('/api/auth/me');
+      const user = await this.request<Record<string, unknown>>('/api/auth/me');
       return { data: { user }, error: null };
     } catch (error) {
       return { data: null, error: error as Error };
@@ -212,7 +258,7 @@ class ApiClient {
   // Goals methods
   async getGoals() {
     try {
-      const goals = await this.request<any[]>('/api/goals/');
+      const goals = await this.request<Record<string, unknown>[]>('/api/goals/');
       return { data: goals, error: null };
     } catch (error) {
       return { data: null, error: error as Error };
@@ -228,7 +274,7 @@ class ApiClient {
     target_date: string;
   }) {
     try {
-      const newGoal = await this.request<any>('/api/goals/', {
+      const newGoal = await this.request<Record<string, unknown>>('/api/goals/', {
         method: 'POST',
         body: JSON.stringify(goal),
       });
@@ -238,9 +284,9 @@ class ApiClient {
     }
   }
 
-  async updateGoal(id: string, updates: any) {
+  async updateGoal(id: string, updates: Record<string, unknown>) {
     try {
-      const updatedGoal = await this.request<any>(`/api/goals/${id}`, {
+      const updatedGoal = await this.request<Record<string, unknown>>(`/api/goals/${id}`, {
         method: 'PUT',
         body: JSON.stringify(updates),
       });
@@ -261,9 +307,9 @@ class ApiClient {
     }
   }
 
-  async updateProfile(updates: any) {
+  async updateProfile(updates: Record<string, unknown>) {
     try {
-      const updatedUser = await this.request<any>('/api/auth/profile', {
+      const updatedUser = await this.request<Record<string, unknown>>('/api/auth/profile', {
         method: 'PUT',
         body: JSON.stringify(updates),
       });
@@ -276,7 +322,7 @@ class ApiClient {
     async submitKYC(data: FormData) {
         try {
             const headers = this.getHeaders();
-            delete (headers as any)['Content-Type'];
+            delete (headers as Record<string, string>)['Content-Type'];
             
             const response = await fetch(`${this.baseURL}/kyc/submit`, {
                 method: 'POST',
@@ -298,7 +344,7 @@ class ApiClient {
 
     async getKYCStatus() {
         try {
-            const data = await this.get<any>('/kyc/status');
+            const data = await this.get<Record<string, unknown>>('/kyc/status');
             return { data, error: null };
         } catch (error) {
             return { data: null, error: error as Error };
@@ -308,7 +354,7 @@ class ApiClient {
   // Portfolio methods
   async getPortfolioSummary() {
     try {
-      const summary = await this.request<any>('/api/portfolio/summary');
+      const summary = await this.request<Record<string, unknown>>('/api/portfolio/summary');
       return { data: summary, error: null };
     } catch (error) {
       return { data: null, error: error as Error };
@@ -317,7 +363,7 @@ class ApiClient {
 
   async getPortfolioHistory(period: string = '6mo') {
     try {
-      const history = await this.request<any[]>(`/api/portfolio/history?period=${period}`);
+      const history = await this.request<Record<string, unknown>[]>(`/api/portfolio/history?period=${period}`);
       return { data: history, error: null };
     } catch (error) {
       return { data: null, error: error as Error };
@@ -327,16 +373,16 @@ class ApiClient {
   // Investments methods
   async getInvestments() {
     try {
-      const investments = await this.request<any[]>('/api/investments/');
+      const investments = await this.request<Record<string, unknown>[]>('/api/investments/');
       return { data: investments, error: null };
     } catch (error) {
       return { data: null, error: error as Error };
     }
   }
 
-  async addInvestment(investment: any) {
+  async addInvestment(investment: Record<string, unknown>) {
     try {
-      const newInvestment = await this.request<any>('/api/investments/', {
+      const newInvestment = await this.request<Record<string, unknown>>('/api/investments/', {
         method: 'POST',
         body: JSON.stringify(investment),
       });
@@ -349,16 +395,16 @@ class ApiClient {
   // Transactions methods
   async getTransactions() {
     try {
-      const transactions = await this.request<any[]>('/api/transactions/');
+      const transactions = await this.request<Record<string, unknown>[]>('/api/transactions/');
       return { data: transactions, error: null };
     } catch (error) {
       return { data: null, error: error as Error };
     }
   }
 
-  async addTransaction(transaction: any) {
+  async addTransaction(transaction: Record<string, unknown>) {
     try {
-      const newTransaction = await this.request<any>('/api/transactions/', {
+      const newTransaction = await this.request<Record<string, unknown>>('/api/transactions/', {
         method: 'POST',
         body: JSON.stringify(transaction),
       });
@@ -371,7 +417,7 @@ class ApiClient {
   // Market methods
   async getMarketIndices() {
     try {
-      const indices = await this.request<any[]>('/api/market/indices');
+      const indices = await this.request<Record<string, unknown>[]>('/api/market/indices');
       return { data: indices, error: null };
     } catch (error) {
       return { data: null, error: error as Error };
@@ -380,7 +426,7 @@ class ApiClient {
 
   async getMarketNews() {
     try {
-      const news = await this.request<any[]>('/api/market/news');
+      const news = await this.request<Record<string, unknown>[]>('/api/market/news');
       return { data: news, error: null };
     } catch (error) {
       return { data: null, error: error as Error };
@@ -413,7 +459,7 @@ class ApiClient {
 
   async getRecommendations() {
     try {
-      const recs = await this.request<any[]>('/api/recommendations/');
+      const recs = await this.request<Record<string, unknown>[]>('/api/recommendations/');
       return { data: recs, error: null };
     } catch (error) {
       return { data: null, error: error as Error };
@@ -422,16 +468,16 @@ class ApiClient {
 
   async getRebalanceRecommendations() {
     try {
-      const recs = await this.request<any[]>('/api/recommendations/rebalance');
+      const recs = await this.request<Record<string, unknown>[]>('/api/recommendations/rebalance');
       return { data: recs, error: null };
     } catch (error) {
       return { data: null, error: error as Error };
     }
   }
 
-  async runSimulation(goalId: string, assumptions: any) {
+  async runSimulation(goalId: string, assumptions: Record<string, unknown>) {
     try {
-      const result = await this.request<any>(`/api/simulations/goal/${goalId}`, {
+      const result = await this.request<Record<string, unknown>>(`/api/simulations/goal/${goalId}`, {
         method: 'POST',
         body: JSON.stringify(assumptions),
       });
@@ -441,9 +487,9 @@ class ApiClient {
     }
   }
 
-  async runAdhocSimulation(assumptions: any) {
+  async runAdhocSimulation(assumptions: Record<string, unknown>) {
     try {
-      const result = await this.request<any>('/api/simulations/adhoc', {
+      const result = await this.request<Record<string, unknown>>('/api/simulations/adhoc', {
         method: 'POST',
         body: JSON.stringify(assumptions),
       });
@@ -456,23 +502,8 @@ class ApiClient {
   // Admin methods
   async getAdminDashboard() {
     try {
-      const data = await this.request<any>('/api/admin/dashboard');
+      const data = await this.request<Record<string, unknown>>('/api/admin/dashboard');
       return { data, error: null };
-    } catch (error) {
-      return { data: null, error: error as Error };
-    }
-  }
-
-  async updateUserCredits(userId: string, amount: number, action: 'add' | 'deduct') {
-    try {
-      const result = await this.request<any>(`/api/admin/users/${userId}/credits`, {
-        method: 'POST',
-        body: JSON.stringify({
-          amount: amount,
-          action: action
-        })
-      });
-      return { data: result, error: null };
     } catch (error) {
       return { data: null, error: error as Error };
     }
@@ -513,7 +544,7 @@ class ApiClient {
   // Dashboard methods
   async getDashboardData() {
     try {
-      const data = await this.request<any>('/api/dashboard/');
+      const data = await this.request<Record<string, unknown>>('/api/dashboard/');
       return { data, error: null };
     } catch (error) {
       return { data: null, error: error as Error };
@@ -523,7 +554,7 @@ class ApiClient {
   // Calculator methods
   async calculateSIP(data: { monthly_investment: number; annual_return: number; years: number }) {
     try {
-      const result = await this.request<any>('/api/calculators/sip', {
+      const result = await this.request<Record<string, unknown>>('/api/calculators/sip', {
         method: 'POST',
         body: JSON.stringify(data),
       });
@@ -535,7 +566,7 @@ class ApiClient {
 
   async calculateRetirement(data: { current_age: number; retirement_age: number; monthly_savings: number; annual_return: number; current_corpus?: number }) {
     try {
-      const result = await this.request<any>('/api/calculators/retirement', {
+      const result = await this.request<Record<string, unknown>>('/api/calculators/retirement', {
         method: 'POST',
         body: JSON.stringify(data),
       });
@@ -547,9 +578,13 @@ class ApiClient {
 
   async calculateLoan(data: { principal: number; rate: number; tenure_years: number }) {
     try {
-      const result = await this.request<any>('/api/calculators/loan', {
+      const result = await this.request<Record<string, unknown>>('/api/calculators/loan-emi', {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          principal: data.principal,
+          annual_rate: data.rate,
+          tenure_years: data.tenure_years
+        }),
       });
       return { data: result, error: null };
     } catch (error) {
@@ -560,7 +595,7 @@ class ApiClient {
   // Reports methods
   async getReports() {
     try {
-      const reports = await this.request<any[]>('/api/reports/');
+      const reports = await this.request<Record<string, unknown>[]>('/api/reports/');
       return { data: reports, error: null };
     } catch (error) {
       return { data: null, error: error as Error };
@@ -676,16 +711,16 @@ class ApiClient {
 
   async getAllUsers() {
     try {
-      const users = await this.request<any[]>('/api/admin/users');
+      const users = await this.request<Record<string, unknown>[]>('/api/admin/users');
       return { data: users, error: null };
     } catch (error) {
       return { data: null, error: error as Error };
     }
   }
 
-  async updateUser(userId: string, updates: any) {
+  async updateUser(userId: string, updates: Record<string, unknown>) {
     try {
-      const updatedUser = await this.request<any>(`/api/admin/users/${userId}`, {
+      const updatedUser = await this.request<Record<string, unknown>>(`/api/admin/users/${userId}`, {
         method: 'PUT',
         body: JSON.stringify(updates),
       });

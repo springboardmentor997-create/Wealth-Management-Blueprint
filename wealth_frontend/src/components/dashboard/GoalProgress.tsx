@@ -38,6 +38,21 @@ export function GoalProgress({ goals }: GoalProgressProps) {
     }).format(value);
   };
 
+  // Error handling for undefined/null goals
+  if (!goals || !Array.isArray(goals) || goals.length === 0) {
+    return (
+      <div className="rounded-xl bg-card border border-border p-6 animate-fade-in">
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold">Goal Progress</h3>
+          <p className="text-sm text-muted-foreground">Track your financial goals</p>
+        </div>
+        <div className="text-center text-muted-foreground py-8">
+          No goals set yet. Create your first goal to start tracking progress.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-xl bg-card border border-border p-6 animate-fade-in">
       <div className="mb-6">
@@ -47,29 +62,33 @@ export function GoalProgress({ goals }: GoalProgressProps) {
       
       <div className="space-y-5">
         {goals.map((goal) => {
-          const Icon = goalIcons[goal.goal_type] || Sparkles;
-          const progress = (goal.current_amount / goal.target_amount) * 100;
+          // Safe property access with fallbacks
+          const goalType = goal?.goal_type || 'custom';
+          const Icon = goalIcons[goalType] || Sparkles;
+          const currentAmount = goal?.current_amount || 0;
+          const targetAmount = goal?.target_amount || 1;
+          const progress = targetAmount > 0 ? (currentAmount / targetAmount) * 100 : 0;
           
           return (
-            <div key={goal.id} className="space-y-3">
+            <div key={goal?.id || Math.random()} className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     "flex h-8 w-8 items-center justify-center rounded-lg bg-secondary",
-                    goalColors[goal.goal_type] || goalColors.custom
+                    goalColors[goalType] || goalColors.custom
                   )}>
                     <Icon className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium">{goal.title}</p>
+                    <p className="text-sm font-medium">{goal?.title || 'Untitled Goal'}</p>
                     <p className="text-xs text-muted-foreground">
-                      {formatCurrency(goal.current_amount)} / {formatCurrency(goal.target_amount)}
+                      {formatCurrency(currentAmount)} / {formatCurrency(targetAmount)}
                     </p>
                   </div>
                 </div>
                 <span className="text-sm font-medium">{Math.round(progress)}%</span>
               </div>
-              <Progress value={progress} className="h-2" />
+              <Progress value={Math.min(progress, 100)} className="h-2" />
             </div>
           );
         })}

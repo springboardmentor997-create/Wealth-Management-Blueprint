@@ -29,7 +29,6 @@ export function UsersTab() {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [creditAmounts, setCreditAmounts] = useState<Record<string, string>>({});
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -46,30 +45,6 @@ export function UsersTab() {
   });
 
   // React Query: Mutations
-  const updateCreditsMutation = useMutation({
-    mutationFn: async ({ userId, amount, action }: { userId: string, amount: number, action: 'add' | 'deduct' }) => {
-      const { data, error } = await apiClient.updateUserCredits(userId, amount, action);
-      if (error) throw error;
-      return { userId, newBalance: data.new_balance, action, amount };
-    },
-    onSuccess: ({ userId, newBalance, action, amount }) => {
-      // Optimistically update the list
-      queryClient.setQueryData(['users'], (oldUsers: User[] | undefined) => {
-        return oldUsers?.map(u => u.id === userId ? { ...u, credits: newBalance } : u) || [];
-      });
-      // Invalidate to ensure consistency with backend
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      
-      setCreditAmounts(prev => {
-        const next = { ...prev };
-        delete next[userId];
-        return next;
-      });
-      toast({ title: "Credits Updated", description: `Successfully ${action}ed ${amount}. New balance: $${Number(newBalance).toFixed(2)}` });
-    },
-    onError: (err: Error) => toast({ title: "Update Failed", description: err.message, variant: "destructive" })
-  });
-
   const verifyKYCMutation = useMutation({
     mutationFn: async (user: User) => {
       const { data, error } = await apiClient.updateUser(user.id, { kyc_status: 'verified' });
@@ -136,16 +111,6 @@ export function UsersTab() {
   };
 
   // handlers
-  const handleUpdateCreditClick = (user: User, action: 'add' | 'deduct') => {
-    if (!user?.id) return;
-    const amountVal = parseFloat(creditAmounts[user.id] || '0');
-    if (isNaN(amountVal) || amountVal <= 0) {
-      toast({ title: "Invalid Amount", description: "Please enter a valid positive number", variant: "destructive" });
-      return;
-    }
-    updateCreditsMutation.mutate({ userId: user.id, amount: amountVal, action });
-  };
-
   const handleVerifyKYC = (user: User) => {
     if (user?.id) verifyKYCMutation.mutate(user);
   };
@@ -200,7 +165,6 @@ export function UsersTab() {
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>KYC Status</TableHead>
-                <TableHead>Credits</TableHead>
                 <TableHead>Last Login</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -213,42 +177,9 @@ export function UsersTab() {
                   <TableCell className="font-medium">{user.name || 'Unknown'}</TableCell>
                   <TableCell>{user.email || 'No Email'}</TableCell>
                   <TableCell>{getStatusBadge(user.kyc_status || 'unverified')}</TableCell>
-                  <TableCell>${typeof user.credits === 'number' ? user.credits.toFixed(2) : '0.00'}</TableCell>
                   <TableCell>{user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <div className="flex items-center gap-1 mr-2">
-                        <Input 
-                          type="number" 
-                          placeholder="Amt" 
-                          className="w-16 h-8 text-xs"
-                          value={creditAmounts[user.id] || ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setCreditAmounts(prev => ({ ...prev, [user.id]: val }));
-                          }}
-                        />
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="h-8 px-2 hover:bg-green-100 hover:text-green-700 hover:border-green-200" 
-                          onClick={() => handleUpdateCreditClick(user, 'add')}
-                          disabled={updateCreditsMutation.isPending}
-                          title="Add Credits"
-                        >
-                          +
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="h-8 px-2 hover:bg-red-100 hover:text-red-700 hover:border-red-200" 
-                          onClick={() => handleUpdateCreditClick(user, 'deduct')}
-                          disabled={updateCreditsMutation.isPending}
-                          title="Deduct Credits"
-                        >
-                          -
-                        </Button>
-                      </div>
                       {user.kyc_status !== 'verified' && (
                         <Button
                           variant="outline"

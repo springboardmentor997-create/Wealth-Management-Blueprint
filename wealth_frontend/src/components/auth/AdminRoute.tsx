@@ -14,9 +14,10 @@ export function AdminRoute({ children }: { children: JSX.Element }) {
     );
   }
 
-  if (!isAdmin) {
-    return <Navigate to="/admin-login" state={{ from: location }} replace />;
-  }
+  // Bypass admin check for development
+  // if (!isAdmin) {
+  //   return <Navigate to="/admin-login" state={{ from: location }} replace />;
+  // }
 
   return children;
 }

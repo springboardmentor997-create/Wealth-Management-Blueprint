@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from database import get_db
-from models import User
+from fastapi_backend.database import get_db
+from .models import User
 import logging
 
 # Configure logging
@@ -31,18 +31,36 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 
 def verify_password(plain_password, hashed_password):
+    # Ensure plain_password is a string
+    if not isinstance(plain_password, str):
+        plain_password = str(plain_password)
+    
     # Check if it's a simple hash (for admin user)
     import hashlib
     simple_hash = hashlib.sha256(plain_password.encode()).hexdigest()
     if simple_hash == hashed_password:
         return True
+    
     # Otherwise use bcrypt
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except Exception as e:
+        logger.error(f"Password verification error: {e}")
+        return False
 
 def get_password_hash(password):
+    print(f"Password received: {password} (type: {type(password)}, length: {len(password)})")
+    # Ensure password is a string
+    if not isinstance(password, str):
+        password = str(password)
+
     # Truncate password if it's too long for bcrypt (72 bytes max)
-    if len(password.encode('utf-8')) > 72:
-        password = password[:72]
+    password_bytes = password.encode('utf-8')
+    if len(password_bytes) > 72:
+        # Truncate by bytes, not characters, to avoid encoding issues
+        password = password_bytes[:72].decode('utf-8', errors='ignore')
+        print(f"Password truncated to: {password} (length: {len(password)})")
+
     return pwd_context.hash(password)
 
 def create_access_token(data: dict, expires_delta: timedelta = None):

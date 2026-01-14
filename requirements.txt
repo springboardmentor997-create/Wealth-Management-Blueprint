@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+python-jose
+passlib
+bcrypt
+python-multipart
+yfinance
+python-dotenv
+psycopg2-binary
+alembic
+requests
+cors

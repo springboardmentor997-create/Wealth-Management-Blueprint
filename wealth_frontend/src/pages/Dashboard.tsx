@@ -38,9 +38,9 @@ const Dashboard = () => {
     }).format(value);
   };
 
-  const totalGoalProgress = goals.reduce((acc, goal) => acc + goal.current_amount, 0);
-  const totalGoalTarget = goals.reduce((acc, goal) => acc + goal.target_amount, 0);
-  const totalMonthlyContribution = goals.reduce((acc, goal) => acc + goal.monthly_contribution, 0);
+  const totalGoalProgress = goals?.reduce((acc, goal) => acc + (goal?.current_amount || 0), 0) || 0;
+  const totalGoalTarget = goals?.reduce((acc, goal) => acc + (goal?.target_amount || 0), 0) || 0;
+  const totalMonthlyContribution = goals?.reduce((acc, goal) => acc + (goal?.monthly_contribution || 0), 0) || 0;
 
   if (portfolioLoading || goalsLoading) {
     return (
@@ -91,7 +91,7 @@ const Dashboard = () => {
           <StatCard
             title="Total Gains"
             value={formatCurrency(summary?.total_gain_loss || 0)}
-            change={summary?.total_cost_basis ? (summary.total_gain_loss / summary.total_cost_basis) * 100 : 0}
+            change={summary?.total_cost_basis && summary?.total_cost_basis > 0 ? ((summary?.total_gain_loss || 0) / summary.total_cost_basis) * 100 : 0}
             changeLabel="all time"
             icon={<TrendingUp className="h-5 w-5" />}
           />
@@ -119,7 +119,7 @@ const Dashboard = () => {
 
         {/* Bottom Row */}
         <div className="grid gap-6 lg:grid-cols-3">
-          <GoalProgress goals={goals} />
+          <GoalProgress goals={goals || []} />
           <TopHoldings />
           <RecentTransactions />
         </div>

@@ -3,10 +3,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from decimal import Decimal
 
-from database import get_db
-from models import User, Goal, Investment, Transaction
-from schemas import DashboardData
-from dependencies import get_current_user
+from ..database import get_db
+from ..models import User, Goal, Investment, Transaction
+from ..schemas import DashboardData
+from ..auth import get_current_user
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
@@ -18,7 +18,7 @@ async def get_dashboard_data(
     # Calculate total portfolio value
     investments = db.query(Investment).filter(Investment.user_id == current_user.id).all()
     total_portfolio_value = sum(
-        (inv.quantity * inv.current_price) for inv in investments
+        (inv.current_value or 0) for inv in investments
     ) if investments else Decimal('0')
     
     # Get goals statistics

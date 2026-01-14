@@ -16,3 +16,5 @@ redis==5.0.1
 email-validator
 requests
 pandas
+pydantic[email]
+

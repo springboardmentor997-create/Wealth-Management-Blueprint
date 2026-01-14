@@ -6,10 +6,10 @@ import os
 from datetime import datetime
 import uuid
 
-import models
-import schemas
-from database import get_db
-from dependencies import get_current_user, get_admin_user
+from ..models import User, KYCRequest
+from .. import schemas
+from ..database import get_db
+from ..dependencies import get_current_user, get_admin_user
 
 router = APIRouter(
     prefix="/kyc",
@@ -25,10 +25,10 @@ async def submit_kyc(
     address: str = Form(...),
     document_proof: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     # Check if KYC already exists
-    existing_kyc = db.query(models.KYCRequest).filter(models.KYCRequest.user_id == current_user.id).first()
+    existing_kyc = db.query(KYCRequest).filter(KYCRequest.user_id == current_user.id).first()
     if existing_kyc:
         # If rejected, allow re-submission (update). If pending/verified, block.
         if existing_kyc.status == "verified":
@@ -40,7 +40,7 @@ async def submit_kyc(
         # Let's update it.
         kyc_request = existing_kyc
     else:
-        kyc_request = models.KYCRequest(user_id=current_user.id)
+        kyc_request = KYCRequest(user_id=current_user.id)
         db.add(kyc_request)
 
     # Handle file upload
@@ -76,9 +76,9 @@ async def submit_kyc(
     current_user.kyc_status = "pending"
 
     # Notify Admins
-    admins = db.query(models.User).filter(models.User.is_admin == "true").all()
+    admins = db.query(User).filter(User.is_admin == "true").all()
     for admin in admins:
-        notification = models.Notification(
+        notification = Notification(
             user_id=admin.id,
             title="New KYC Submission",
             message=f"User {current_user.name} ({current_user.email}) has submitted KYC documents for verification.",
@@ -95,9 +95,9 @@ async def submit_kyc(
 @router.get("/status", response_model=schemas.KYCResponse)
 def get_kyc_status(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
-    kyc_request = db.query(models.KYCRequest).filter(models.KYCRequest.user_id == current_user.id).first()
+    kyc_request = db.query(KYCRequest).filter(KYCRequest.user_id == current_user.id).first()
     if not kyc_request:
         raise HTTPException(status_code=404, detail="KYC details not found")
     return kyc_request
@@ -106,9 +106,9 @@ def get_kyc_status(
 @router.get("/pending", response_model=list[schemas.KYCResponse])
 def get_pending_kyc_requests(
     db: Session = Depends(get_db),
-    admin_user: models.User = Depends(get_admin_user)
+    admin_user: User = Depends(get_admin_user)
 ):
-    return db.query(models.KYCRequest).filter(models.KYCRequest.status == "pending").all()
+    return db.query(KYCRequest).filter(KYCRequest.status == "pending").all()
 
 
 @router.put("/verify/{user_id}", response_model=schemas.KYCResponse)
@@ -116,7 +116,7 @@ def verify_kyc(
     user_id: str,
     update_data: schemas.KYCStatusUpdate,
     db: Session = Depends(get_db),
-    admin_user: models.User = Depends(get_admin_user)
+    admin_user: User = Depends(get_admin_user)
 ):
     kyc_request = db.query(models.KYCRequest).filter(models.KYCRequest.user_id == user_id).first()
     if not kyc_request:

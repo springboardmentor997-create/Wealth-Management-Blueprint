@@ -12,7 +12,7 @@ interface StatCardProps {
 }
 
 export function StatCard({ title, value, change, changeLabel, icon, className }: StatCardProps) {
-  const isPositive = change !== undefined && change >= 0;
+  const isPositive = change !== undefined && change !== null && change >= 0;
   
   return (
     <div className={cn(
@@ -21,10 +21,10 @@ export function StatCard({ title, value, change, changeLabel, icon, className }:
     )}>
       <div className="flex items-start justify-between">
         <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-2xl font-bold tracking-tight">{value}</p>
+          <p className="text-sm font-medium text-muted-foreground">{title || 'N/A'}</p>
+          <p className="text-2xl font-bold tracking-tight">{value || '$0'}</p>
           
-          {change !== undefined && (
+          {change !== undefined && change !== null && !isNaN(change) && (
             <div className="flex items-center gap-1.5">
               {isPositive ? (
                 <TrendingUp className="h-4 w-4 text-success" />

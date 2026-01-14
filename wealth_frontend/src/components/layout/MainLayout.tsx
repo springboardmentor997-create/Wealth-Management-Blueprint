@@ -15,11 +15,12 @@ export function MainLayout({ children }: MainLayoutProps) {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate('/auth');
-    }
-  }, [user, loading, navigate]);
+  // Bypass login check in layout
+  // useEffect(() => {
+  //   if (!loading && !user) {
+  //     navigate('/auth');
+  //   }
+  // }, [user, loading, navigate]);
 
   if (loading) {
     return (

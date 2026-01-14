@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { AdminAuthProvider } from "@/hooks/useAdminAuth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
+import { ThemeProvider } from "next-themes";
 import Dashboard from "./pages/Dashboard";
 import Goals from "./pages/Goals";
 import Portfolio from "./pages/Portfolio";
@@ -26,14 +27,15 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
-        <AuthProvider>
-          <AdminAuthProvider>
-            <Routes>
-              {/* Public Routes */}
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <AdminAuthProvider>
+              <Routes>
+                {/* Public Routes */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin-login" element={<AdminLogin />} />
               <Route path="/test-login" element={<TestLogin />} />
@@ -76,12 +78,12 @@ const App = () => (
                   <Reports />
                 </ProtectedRoute>
               } />
-              <Route path="/recommendations" element={
+              <Route path="/notifications" element={
                 <ProtectedRoute>
-                  <Recommendations />
+                  <Notifications />
                 </ProtectedRoute>
               } />
-              <Route path="/notifications" element={
+              <Route path="/recommendations" element={
                 <ProtectedRoute>
                   <Notifications />
                 </ProtectedRoute>
@@ -97,7 +99,8 @@ const App = () => (
           </AdminAuthProvider>
         </AuthProvider>
       </BrowserRouter>
-    </TooltipProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

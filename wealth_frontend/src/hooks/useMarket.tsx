@@ -49,7 +49,12 @@ export function useMarket() {
   useEffect(() => {
     fetchMarketData();
     // Refresh every 5 minutes
-    const interval = setInterval(fetchMarketData, 5 * 60 * 1000);
+    const interval = setInterval(() => {
+      // Only poll if the document is visible
+      if (!document.hidden) {
+         fetchMarketData();
+      }
+    }, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 

@@ -1,179 +1,204 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-import uuid
+from typing import List
 from datetime import datetime
+import uuid
+import numpy as np
 
-from database import get_db
-from models import User, Simulation as SimulationModel, Goal as GoalModel
-from schemas import SimulationRequest, SimulationResult, Simulation, AdhocSimulationRequest
-from auth import get_current_user
+from ..database import get_db
+from ..models import User, Goal
+from ..schemas import SimulationRequest, AdhocSimulationRequest, SimulationResult
+from ..auth import get_current_user
 
 router = APIRouter(prefix="/api/simulations", tags=["simulations"])
 
-@router.post("/adhoc", response_model=Simulation)
-async def run_adhoc_simulation(
-    assumptions: AdhocSimulationRequest,
+class SimulationEngine:
+    @staticmethod
+    def monte_carlo_simulation(
+        initial_amount: float,
+        monthly_contribution: float,
+        annual_return: float,
+        volatility: float,
+        years: int,
+        simulations: int = 1000
+    ) -> dict:
+        """Run Monte Carlo simulation for investment projections"""
+        
+        months = years * 12
+        monthly_return = annual_return / 12 / 100
+        monthly_volatility = volatility / 12 / 100
+        
+        results = []
+        projection_data = []
+        
+        for _ in range(simulations):
+            portfolio_value = initial_amount
+            monthly_values = [portfolio_value]
+            
+            for month in range(months):
+                # Random return based on normal distribution
+                random_return = np.random.normal(monthly_return, monthly_volatility)
+                portfolio_value = portfolio_value * (1 + random_return) + monthly_contribution
+                monthly_values.append(portfolio_value)
+            
+            results.append(portfolio_value)
+        
+        # Calculate statistics
+        final_values = np.array(results)
+        mean_value = np.mean(final_values)
+        percentile_10 = np.percentile(final_values, 10)
+        percentile_90 = np.percentile(final_values, 90)
+        
+        total_contributions = initial_amount + (monthly_contribution * months)
+        investment_growth = mean_value - total_contributions
+        
+        # Generate insights
+        insights = []
+        if mean_value > total_contributions * 1.5:
+            insights.append("Strong growth potential with current strategy")
+        if percentile_10 < total_contributions:
+            insights.append("Consider diversification to reduce downside risk")
+        if investment_growth > total_contributions:
+            insights.append("Investment growth exceeds total contributions")
+        
+        # Sample projection data (monthly averages) - Generate 3 scenarios
+        sample_projection = []
+        
+        # Generate data points yearly
+        for month in range(0, months + 1, 12):  # Yearly data points
+            year = month // 12
+            
+            # Conservative scenario (lower return)
+            conservative_value = initial_amount * ((1 + (annual_return * 0.6)/100) ** year) + \
+                                monthly_contribution * 12 * year * ((1 + (annual_return * 0.6)/100) ** (year/2)) if year > 0 else initial_amount
+            
+            # Moderate scenario (base return)
+            moderate_value = initial_amount * ((1 + annual_return/100) ** year) + \
+                            monthly_contribution * 12 * year * ((1 + annual_return/100) ** (year/2)) if year > 0 else initial_amount
+            
+            # Aggressive scenario (higher return)
+            aggressive_value = initial_amount * ((1 + (annual_return * 1.4)/100) ** year) + \
+                              monthly_contribution * 12 * year * ((1 + (annual_return * 1.4)/100) ** (year/2)) if year > 0 else initial_amount
+            
+            sample_projection.append({
+                "year": year,
+                "conservative": round(max(conservative_value, initial_amount), 2),
+                "moderate": round(max(moderate_value, initial_amount), 2),
+                "aggressive": round(max(aggressive_value, initial_amount), 2),
+                "target": 0  # Will be set from goal target if available
+            })
+        
+        return {
+            "mean_value": round(mean_value, 2),
+            "percentile_10": round(percentile_10, 2),
+            "percentile_90": round(percentile_90, 2),
+            "total_contributions": round(total_contributions, 2),
+            "investment_growth": round(investment_growth, 2),
+            "projection_data": sample_projection,
+            "insights": insights
+        }
+
+@router.post("/goal/{goal_id}", response_model=SimulationResult)
+async def simulate_goal(
+    goal_id: str,
+    simulation_request: SimulationRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    monthly_contribution = assumptions.additional_contribution
-    years = assumptions.years_to_simulate
+    """Run simulation for a specific goal"""
     
-    # Calculate real return rate
-    nominal_return = assumptions.annual_return / 100
-    inflation = assumptions.inflation_rate / 100
-    real_return = (1 + nominal_return) / (1 + inflation) - 1
+    goal = db.query(Goal).filter(
+        Goal.id == goal_id,
+        Goal.user_id == current_user.id
+    ).first()
     
-    current_amount = assumptions.initial_amount
-    projection_data = []
-    
-    conservative = current_amount
-    moderate = current_amount
-    aggressive = current_amount
-    
-    for year in range(years + 1):
-        projection_data.append({
-            "year": f"Year {year}",
-            "conservative": round(conservative),
-            "moderate": round(moderate),
-            "aggressive": round(aggressive),
-            "target": assumptions.target_amount
-        })
-        
-        conservative = conservative * (1 + (real_return - 0.02)) + monthly_contribution * 12
-        moderate = moderate * (1 + real_return) + monthly_contribution * 12
-        aggressive = aggressive * (1 + (real_return + 0.02)) + monthly_contribution * 12
-
-    final_amount = moderate
-    total_contributions = current_amount + (monthly_contribution * 12 * years)
-    investment_growth = final_amount - total_contributions
-    
-    goal_achievement_percentage = 0
-    if assumptions.target_amount > 0:
-        goal_achievement_percentage = min(100, round((final_amount / assumptions.target_amount) * 100, 1))
-    else:
-        goal_achievement_percentage = 100 # No target, so effectively achieved
-
-    insights = [
-        f"Projected value in {years} years: Rs{round(final_amount):,}",
-    ]
-    
-    if assumptions.target_amount > 0:
-        if goal_achievement_percentage < 100:
-            shortfall = assumptions.target_amount - final_amount
-            insights.append(f"Projected shortfall: Rs{round(shortfall):,}")
-            insights.append("Consider increasing monthly contribution")
-        else:
-            insights.append("You are on track to exceed your target!")
-    
-    result = SimulationResult(
-        projected_value=final_amount,
-        total_contributions=total_contributions,
-        investment_growth=investment_growth,
-        goal_achievement_percentage=goal_achievement_percentage,
-        insights=insights,
-        projection_data=projection_data
-    )
-
-    # Note: We don't save adhoc simulations to DB to keep it clean, 
-    # but we return a Simulation object structure for frontend consistency.
-    # We generate a temp ID.
-    return Simulation(
-        id=str(uuid.uuid4()),
-        user_id=current_user.id,
-        goal_id=None,
-        scenario_name="Ad-hoc Simulation",
-        assumptions=assumptions, # Pydantic will filter this to base class fields if not careful, but won't crash
-        results=result,
-        created_at=datetime.now()
-    )
-
-@router.post("/goal/{goal_id}", response_model=Simulation)
-async def run_goal_simulation(
-    goal_id: str, 
-    assumptions: SimulationRequest, 
-    current_user: User = Depends(get_current_user), 
-    db: Session = Depends(get_db)
-):
-    # Fetch goal
-    goal = db.query(GoalModel).filter(GoalModel.id == goal_id, GoalModel.user_id == current_user.id).first()
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
+    
+    # Run Monte Carlo simulation
+    simulation_result = SimulationEngine.monte_carlo_simulation(
+        initial_amount=goal.current_amount,
+        monthly_contribution=goal.monthly_contribution,
+        annual_return=simulation_request.annual_return,
+        volatility=15.0,  # Default volatility
+        years=simulation_request.years_to_simulate
+    )
+    
+    # Update projection data with target value
+    for data_point in simulation_result["projection_data"]:
+        data_point["target"] = goal.target_amount
+    
+    # Calculate goal achievement percentage
+    goal_achievement = min(100, (simulation_result["mean_value"] / goal.target_amount) * 100)
+    
+    return SimulationResult(
+        projected_value=simulation_result["mean_value"],
+        total_contributions=simulation_result["total_contributions"],
+        investment_growth=simulation_result["investment_growth"],
+        goal_achievement_percentage=round(goal_achievement, 2),
+        insights=simulation_result["insights"],
+        projection_data=simulation_result["projection_data"]
+    )
 
-    # Simulation calculation
-    monthly_contribution = assumptions.additional_contribution or goal.monthly_contribution
-    years = assumptions.years_to_simulate
+@router.post("/adhoc", response_model=SimulationResult)
+async def adhoc_simulation(
+    simulation_request: AdhocSimulationRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Run ad-hoc simulation without a specific goal"""
     
-    # Calculate real return rate adjusting for inflation
-    # Real Return = (1 + Nominal) / (1 + Inflation) - 1
-    nominal_return = assumptions.annual_return / 100
-    inflation = assumptions.inflation_rate / 100
-    real_return = (1 + nominal_return) / (1 + inflation) - 1
+    # Run Monte Carlo simulation
+    simulation_result = SimulationEngine.monte_carlo_simulation(
+        initial_amount=simulation_request.initial_amount,
+        monthly_contribution=simulation_request.additional_contribution,
+        annual_return=simulation_request.annual_return,
+        volatility=15.0,
+        years=simulation_request.years_to_simulate
+    )
     
-    current_amount = goal.current_amount
-    projection_data = []
+    # Calculate goal achievement if target is provided
+    goal_achievement = 100.0
+    target_amount = 0
+    if simulation_request.target_amount and simulation_request.target_amount > 0:
+        goal_achievement = min(100, (simulation_result["mean_value"] / simulation_request.target_amount) * 100)
+        target_amount = simulation_request.target_amount
     
-    conservative = current_amount
-    moderate = current_amount
-    aggressive = current_amount
+    # Update projection data with target value
+    for data_point in simulation_result["projection_data"]:
+        data_point["target"] = target_amount
     
-    for year in range(years + 1):
-        projection_data.append({
-            "year": f"Year {year}",
-            "conservative": round(conservative),
-            "moderate": round(moderate),
-            "aggressive": round(aggressive),
-            "target": goal.target_amount
-        })
-        
-        # Apply real return rates for projection (purchasing power)
-        # Conservative: -2% from base
-        # Moderate: base real return
-        # Aggressive: +2% from base
-        
-        conservative = conservative * (1 + (real_return - 0.02)) + monthly_contribution * 12
-        moderate = moderate * (1 + real_return) + monthly_contribution * 12
-        aggressive = aggressive * (1 + (real_return + 0.02)) + monthly_contribution * 12
+    return SimulationResult(
+        projected_value=simulation_result["mean_value"],
+        total_contributions=simulation_result["total_contributions"],
+        investment_growth=simulation_result["investment_growth"],
+        goal_achievement_percentage=round(goal_achievement, 2),
+        insights=simulation_result["insights"],
+        projection_data=simulation_result["projection_data"]
+    )
 
-    # Calculate final results based on moderate scenario
-    final_amount = moderate
-    total_contributions = goal.current_amount + (monthly_contribution * 12 * years)
-    investment_growth = final_amount - total_contributions
-    goal_achievement_percentage = min(100, round((final_amount / goal.target_amount) * 100, 1))
+@router.get("/scenarios")
+async def get_simulation_scenarios(current_user: User = Depends(get_current_user)):
+    """Get predefined simulation scenarios"""
     
-    insights = [
-        f"You are on track to achieve {goal_achievement_percentage}% of your goal",
-        f"Projected value in {years} years: ₹{round(final_amount):,}",
+    scenarios = [
+        {
+            "name": "Conservative",
+            "annual_return": 6.0,
+            "volatility": 8.0,
+            "description": "Low risk, steady growth"
+        },
+        {
+            "name": "Moderate",
+            "annual_return": 10.0,
+            "volatility": 15.0,
+            "description": "Balanced risk and return"
+        },
+        {
+            "name": "Aggressive",
+            "annual_return": 15.0,
+            "volatility": 25.0,
+            "description": "High risk, high potential return"
+        }
     ]
     
-    if goal_achievement_percentage < 100:
-        shortfall = goal.target_amount - final_amount
-        insights.append(f"Projected shortfall: ₹{round(shortfall):,}")
-        insights.append("Consider increasing monthly contribution")
-    else:
-        insights.append("You are on track to exceed your goal!")
-    
-    result = SimulationResult(
-        projected_value=final_amount,
-        total_contributions=total_contributions,
-        investment_growth=investment_growth,
-        goal_achievement_percentage=goal_achievement_percentage,
-        insights=insights,
-        projection_data=projection_data
-    )
-
-    # Save to database
-    db_simulation = SimulationModel(
-        id=str(uuid.uuid4()),
-        user_id=current_user.id,
-        goal_id=goal_id,
-        scenario_name=f"Simulation for Goal {goal.title}",
-        assumptions=assumptions.dict(),
-        results=result.dict()
-    )
-    
-    db.add(db_simulation)
-    db.commit()
-    db.refresh(db_simulation)
-    
-    return db_simulation
+    return scenarios

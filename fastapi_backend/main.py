@@ -2,9 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
-from models import Base
-from database import engine
-from routers import auth, goals, investments, transactions, portfolio, simulations, recommendations, reports, market, admin, calculators, dashboard, notifications, kyc
+from .models import Base
+from .database import engine
+from .routers import auth, goals, investments, transactions, portfolio, simulations, recommendations, reports, market, admin, calculators, dashboard, notifications, kyc
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -17,21 +17,19 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Create uploads directory if it doesn't exist
-os.makedirs("uploads", exist_ok=True)
-
-# Mount static files
-app.mount("/static", StaticFiles(directory="uploads"), name="static")
-
-# CORS middleware
+# CORS middleware - ADD THIS FIRST, before everything else
 origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:8080",
     "http://127.0.0.1:8080",
     "http://localhost:5174",
     "http://127.0.0.1:5174",
-    "http://localhost:5175", 
+    "http://localhost:5175",
     "http://127.0.0.1:5175",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
@@ -39,14 +37,20 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allow all origins for development
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"], # Allow all methods
-    allow_headers=["*"], # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
+# Create uploads directory if it doesn't exist
+os.makedirs("uploads", exist_ok=True)
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="uploads"), name="static")
+
 # Include routers
-app.include_router(auth.router)
+app.include_router(auth.router, prefix="/api/auth")
 app.include_router(kyc.router)
 app.include_router(goals.router)
 app.include_router(investments.router)
@@ -59,6 +63,7 @@ app.include_router(market.router)
 app.include_router(admin.router)
 app.include_router(calculators.router)
 app.include_router(dashboard.router)
+app.include_router(notifications.router)
 
 @app.get("/")
 async def root():
@@ -67,4 +72,3 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
-app.include_router(notifications.router)

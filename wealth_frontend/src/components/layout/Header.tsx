@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 export function Header() {
   const { user, signOut } = useAuth();
@@ -55,8 +55,10 @@ export function Header() {
       const data = await notificationService.getNotifications();
       setNotifications(data);
       setUnreadCount(data.filter(n => n.is_read === 'false').length);
-    } catch (error) {
-      console.error("Failed to fetch notifications", error);
+    } catch (error: any) {
+      if (error.message !== 'Invalid authentication credentials') {
+        console.error("Failed to fetch notifications", error);
+      }
     }
   };
 
@@ -179,10 +181,6 @@ export function Header() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
-        <div className="mr-2 hidden md:flex items-center bg-secondary/50 px-3 py-1 rounded-full border border-border">
-            <span className="text-sm font-medium">Credits: ${user?.credits?.toFixed(2) ?? '0.00'}</span>
-        </div>
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
