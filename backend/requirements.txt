@@ -12,3 +12,6 @@ passlib[bcrypt]
 python-jose[cryptography]
 python-multipart
 reportlab
+celery==5.3.6
+redis==5.0.1
+yfinance==0.2.36

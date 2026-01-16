@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
@@ -18,13 +19,37 @@ def admin_required(current_user: User = Depends(get_current_user)):
 
 @router.get("/stats")
 def get_admin_stats(db: Session = Depends(get_db), _=Depends(admin_required)):
-    # Total platform users (excluding other admins)
     clients = db.query(User).filter(User.role == "user")
     
     return {
         "total_users": clients.count(),
         "pending_kyc": clients.filter(User.kyc_status == "Pending").count(),
-        "total_aum": sum(inv.current_value for inv in db.query(Investment).all()) or 0
+        # Sum of all investments
+        "total_aum": db.query(func.sum(Investment.current_value)).scalar() or 0,
+        # Count of active goals
+        "active_goals": db.query(Goal).filter(Goal.is_completed == False).count()
+    }
+
+@router.get("/charts")
+def get_admin_charts(db: Session = Depends(get_db), _=Depends(admin_required)):
+    """
+    Returns aggregated data for visualizations
+    """
+    # 1. Risk Profile Distribution (Bar Chart)
+    # Counts users by their risk profile (e.g., High: 5, Low: 2)
+    risk_data = db.query(
+        User.risk_profile, func.count(User.id)
+    ).filter(User.role == 'user').group_by(User.risk_profile).all()
+    
+    # 2. Top Assets by Value (Pie Chart)
+    # Sums up value per asset name (e.g., AAPL: $5000, Gold: $2000)
+    asset_data = db.query(
+        Investment.asset_name, func.sum(Investment.current_value)
+    ).group_by(Investment.asset_name).order_by(func.sum(Investment.current_value).desc()).limit(5).all()
+
+    return {
+        "risk_distribution": [{"name": r[0] or "Unknown", "value": r[1]} for r in risk_data],
+        "asset_allocation": [{"name": a[0], "value": a[1]} for a in asset_data]
     }
 
 @router.get("/users", response_model=List[UserOut])
@@ -39,13 +64,11 @@ def approve_kyc(user_id: int, db: Session = Depends(get_db), _=Depends(admin_req
     db.commit()
     return {"msg": "User verified successfully"}
 
-@router.get("/users/{user_id}/full-data") # 👈 Check for typos here
+@router.get("/users/{user_id}/full-data")
 def get_user_full_data(user_id: int, db: Session = Depends(get_db), _=Depends(admin_required)):
     user = db.query(User).filter(User.id == user_id).first()
-    
-    # If the user doesn't exist in the DB, it will also return a 404
     if not user:
-        raise HTTPException(status_code=404, detail="User not found in database")
+        raise HTTPException(status_code=404, detail="User not found")
     
     investments = db.query(Investment).filter(Investment.user_id == user_id).all()
     goals = db.query(Goal).filter(Goal.user_id == user_id).all()
@@ -58,7 +81,6 @@ def get_user_full_data(user_id: int, db: Session = Depends(get_db), _=Depends(ad
 
 @router.get("/users/pending")
 def get_pending_kyc_users(db: Session = Depends(get_db), _=Depends(admin_required)):
-    # Use .ilike for case-insensitive matching to avoid ENUM errors
     pending_users = db.query(User).filter(
         User.role == "user", 
         User.kyc_status.ilike("Pending")
