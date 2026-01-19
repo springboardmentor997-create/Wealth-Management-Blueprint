@@ -1,0 +1,1 @@
+@echo off\necho Quick Starting Backend...\n\nREM Install dependencies if needed\npip install fastapi uvicorn sqlalchemy pydantic python-jose passlib bcrypt python-multipart\n\nREM Start server\necho Starting server on http://localhost:8080\nuvicorn main:app --reload --host 0.0.0.0 --port 8080

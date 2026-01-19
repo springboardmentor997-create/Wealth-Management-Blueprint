@@ -1,0 +1,1 @@
+@echo off\necho Starting Wealth Management Backend...\necho.\n\necho Initializing database...\npython init_database.py\necho.\n\necho Starting FastAPI server...\nuvicorn main:app --reload --port 8080\n\npause
