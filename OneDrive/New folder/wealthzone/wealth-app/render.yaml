@@ -1,0 +1,65 @@
+services:
+  - type: web
+    name: wealth-backend
+    env: python
+    plan: free
+    branch: Dilip-wealthzone
+    repo: https://github.com/springboardmentor997-create/Wealth-Management-Blueprint
+    runtime: python-3.11
+    
+    buildCommand: |
+      cd fastapi_backend && pip install -r requirements.txt
+    startCommand: python -m uvicorn fastapi_backend.main:app --host 0.0.0.0 --port $PORT
+    
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: wealth_db
+          property: connectionString
+      - key: API_ENV
+        value: production
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "30"
+      - key: ALLOWED_ORIGINS
+        value: "https://wealth-frontend.onrender.com"
+      # Add your API keys - generate in Render dashboard
+      - key: ALPHA_VANTAGE_KEY
+        sync: false
+      - key: FINNHUB_KEY
+        sync: false
+      - key: NEWSAPI_KEY
+        sync: false
+
+  - type: web
+    name: wealth-frontend
+    env: node
+    plan: free
+    branch: Dilip-wealthzone
+    repo: https://github.com/springboardmentor997-create/Wealth-Management-Blueprint
+    runtime: node-18
+    
+    buildCommand: cd wealth_frontend && npm install && npm run build
+    startCommand: npm run preview -- --host 0.0.0.0 --port $PORT
+    publishPath: wealth_frontend/dist
+    
+    envVars:
+      - key: NODE_VERSION
+        value: 18.16.0
+      - key: VITE_API_URL
+        value: https://wealth-backend.onrender.com
+
+databases:
+  - name: wealth_db
+    engine: postgresql
+    version: "15"
+    plan: free
+    databaseName: wealth_db
+    user: postgres
