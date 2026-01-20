@@ -98,5 +98,4 @@ Frontend → Backend → Database
 
 ---
 
-## 📂 Project Structure
 
