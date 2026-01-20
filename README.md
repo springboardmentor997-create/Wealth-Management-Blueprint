@@ -63,7 +63,7 @@ Frontend → Backend → Database
 
 - **Frontend**: React + TypeScript + Tailwind CSS
 - **Backend**: Node.js + Express.js
-- **Database**: PostgreSQL
+- **Database**: mongo db
 - **Authentication**: JWT (JSON Web Tokens)
 
 ---
