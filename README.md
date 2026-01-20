@@ -1,73 +1,102 @@
-# Welcome to your Lovable project
+# Personalized Wealth Management & Goal Tracker
 
-## Project info
+A full-stack web application designed to help users **plan, track, and optimize their financial goals** through personalized dashboards, analytics, and simulations.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+This project provides a structured approach to wealth management for individuals, students, professionals, and families by combining **goal-based planning, portfolio tracking, and financial insights**.
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 📌 Problem Statement
 
-**Use Lovable**
+Many individuals struggle to:
+- Track multiple financial goals efficiently
+- Understand portfolio growth and investment performance
+- Visualize long-term financial outcomes
+- Manage finances securely in one platform
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+Existing tools are often complex, non-intuitive, or lack personalization.
 
-Changes made via Lovable will be committed automatically to this repo.
+---
 
-**Use your preferred IDE**
+## 🎯 Solution Overview
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+The **Personalized Wealth Management & Goal Tracker** solves this by offering:
+- Goal-based financial planning
+- Interactive dashboards and charts
+- Secure user authentication
+- Admin monitoring and analytics
+- Scalable backend architecture
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+---
 
-Follow these steps:
+## 🚀 Key Features
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### User Features
+- Secure user registration and login (JWT based)
+- Create and manage financial goals
+- Track portfolio value and investments
+- Visualize growth using charts and graphs
+- Run financial simulations for future planning
+- Export reports (CSV)
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Admin Features
+- Admin authentication
+- User management
+- Platform analytics and reports
+- Role-based access control
 
-# Step 3: Install the necessary dependencies.
-npm i
+---
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## 🧠 Core Innovations
 
-**Edit a file directly in GitHub**
+- Goal-oriented financial visualization
+- Animated charts for better insights
+- Modular frontend & backend architecture
+- Clean and scalable API design
+- Separation of user and admin workflows
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## 🏗️ System Architecture
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Frontend → Backend → Database
 
-## What technologies are used for this project?
+- **Frontend**: React + TypeScript + Tailwind CSS
+- **Backend**: Node.js + Express.js
+- **Database**: PostgreSQL
+- **Authentication**: JWT (JSON Web Tokens)
 
-This project is built with:
+---
 
-- Vite
-- TypeScript
+## 🛠️ Tech Stack
+
+### Frontend
 - React
-- shadcn-ui
+- TypeScript
 - Tailwind CSS
+- Vite
+- Chart & animation libraries
 
-## How can I deploy this project?
+### Backend
+- Node.js
+- Express.js
+- JWT Authentication
+- REST APIs
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+### Database
+- PostgreSQL
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes, you can!
+## 🔐 Security & Reliability
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- JWT-based authentication
+- Protected API routes
+- Role-based access (User / Admin)
+- Environment-based configuration
+- Secure data handling
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
+
+## 📂 Project Structure
+
