@@ -186,7 +186,7 @@ export default function TestLogin() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-600">
-              Backend: http://localhost:8080<br/>
+              Backend: http://localhost:8000<br/>
               Check browser console for detailed API logs
             </p>
           </CardContent>

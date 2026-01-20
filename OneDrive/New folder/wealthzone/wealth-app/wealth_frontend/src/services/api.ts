@@ -1,4 +1,4 @@
-const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8080';
+const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8000';
 // Helper to store JWT
 function storeToken(token: string) {
   if (token) {
@@ -34,7 +34,7 @@ class ApiClient {
   private token: string | null = null;
 
   constructor(baseURL: string) {
-    this.baseURL = typeof baseURL === 'string' ? baseURL : 'http://localhost:8080';
+    this.baseURL = typeof baseURL === 'string' ? baseURL : 'http://localhost:8000';
     this.token = localStorage.getItem('auth_token');
   }
 

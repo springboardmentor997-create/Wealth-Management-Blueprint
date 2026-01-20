@@ -21,7 +21,7 @@ interface ActivityLogItem {
   document_url?: string;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 
 const categoryIcons: Record<string, React.ReactNode> = {
