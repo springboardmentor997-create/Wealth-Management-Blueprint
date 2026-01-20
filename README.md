@@ -84,7 +84,7 @@ Frontend → Backend → Database
 - REST APIs
 
 ### Database
-- PostgreSQL
+- MONGO DB
 
 ---
 
