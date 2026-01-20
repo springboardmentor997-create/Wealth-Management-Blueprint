@@ -1,0 +1,37 @@
+# Quick Start: Gmail Password Reset Emails
+
+## TL;DR - 5 Minutes Setup
+
+### 1. Enable 2-Factor Auth on Gmail
+https://myaccount.google.com/security → 2-Step Verification → Turn On
+
+### 2. Create App Password
+https://myaccount.google.com/apppasswords
+- App: Mail
+- Device: Windows Computer
+- Copy the 16 characters (remove spaces)
+
+### 3. Update .env
+```
+SMTP_USER=your_email@gmail.com
+SMTP_PASSWORD=your_16_chars
+SENDER_EMAIL=your_email@gmail.com
+```
+
+### 4. Test
+```bash
+python test_forgot_password_email.py
+```
+
+### 5. Done!
+Users can now reset passwords via email.
+
+---
+
+## Full Documentation
+
+See `GMAIL_SETUP.md` for:
+- Step-by-step screenshots guide
+- Troubleshooting
+- Security best practices
+- Alternative email services (SendGrid, Outlook, etc.)
