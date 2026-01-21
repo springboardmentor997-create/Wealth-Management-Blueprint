@@ -126,6 +126,18 @@ class User(BaseModel):
     last_login: Optional[datetime] = None
     created_at: datetime
 
+    @validator('risk_profile', pre=True, always=True)
+    def set_risk_profile(cls, v):
+        return v or "moderate"
+    
+    @validator('kyc_status', pre=True, always=True)
+    def set_kyc_status(cls, v):
+        return v or "unverified"
+    
+    @validator('is_admin', pre=True, always=True)
+    def set_is_admin(cls, v):
+        return v or "false"
+
     class Config:
         from_attributes = True
 
