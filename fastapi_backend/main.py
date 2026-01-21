@@ -3,9 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import Response
 import os
-from .models import Base
-from .database import engine
-from .routers import auth, goals, investments, transactions, portfolio, simulations, recommendations, reports, market, admin, calculators, dashboard, notifications, kyc
+import sys
+
+# Add the current directory to path for imports to work on Render
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from models import Base
+from database import engine
+from routers import auth, goals, investments, transactions, portfolio, simulations, recommendations, reports, market, admin, calculators, dashboard, notifications, kyc
 
 # Create database tables
 Base.metadata.create_all(bind=engine)

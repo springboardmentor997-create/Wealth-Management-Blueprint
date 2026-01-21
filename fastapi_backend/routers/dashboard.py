@@ -3,10 +3,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from decimal import Decimal
 
-from ..database import get_db
-from ..models import User, Goal, Investment, Transaction
-from ..schemas import DashboardData
-from ..auth import get_current_user
+from database import get_db
+from models import User, Goal, Investment, Transaction
+from schemas import DashboardData
+from auth import get_current_user
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 

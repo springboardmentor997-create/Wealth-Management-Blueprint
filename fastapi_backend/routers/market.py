@@ -5,11 +5,11 @@ from typing import List, Dict, Any
 import yfinance as yf
 import random
 
-from ..database import get_db
-from ..auth import get_current_user
-from ..models import User
-from ..market_service import MarketDataService
-from ..schemas import MarketIndex, MarketNews, MarketUpdateResponse
+from database import get_db
+from auth import get_current_user
+from models import User
+from market_service import MarketDataService
+from schemas import MarketIndex, MarketNews, MarketUpdateResponse
 
 router = APIRouter(prefix="/api/market", tags=["market"])
 

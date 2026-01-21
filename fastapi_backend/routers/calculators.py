@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from ..calculators import FinancialCalculators
+from calculators import FinancialCalculators
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/calculators", tags=["calculators"])

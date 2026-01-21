@@ -2,7 +2,7 @@ import requests
 import yfinance as yf
 from datetime import datetime
 from sqlalchemy.orm import Session
-from .models import Investment
+from models import Investment
 
 class MarketDataService:
     @staticmethod

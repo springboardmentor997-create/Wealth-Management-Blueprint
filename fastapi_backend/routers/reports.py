@@ -10,11 +10,11 @@ import shutil
 from pathlib import Path
 from io import BytesIO
 
-from ..database import get_db
-from ..models import User, Investment, Transaction, Report
-from ..schemas import ReportFileResponse, ReportFileCreate
-from ..auth import get_current_user
-from ..report_generator import ReportGenerator
+from database import get_db
+from models import User, Investment, Transaction, Report
+from schemas import ReportFileResponse, ReportFileCreate
+from auth import get_current_user
+from report_generator import ReportGenerator
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
 

@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from typing import List
-from ..database import get_db
-from ..models import Notification, User, Goal, Investment
-from ..schemas import Notification as NotificationSchema
-from ..auth import get_current_user
+from database import get_db
+from models import Notification, User, Goal, Investment
+from schemas import Notification as NotificationSchema
+from auth import get_current_user
 from datetime import datetime, timedelta
 import uuid
 import random

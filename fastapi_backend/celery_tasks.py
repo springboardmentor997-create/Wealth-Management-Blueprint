@@ -6,8 +6,8 @@ import os
 import uuid
 from datetime import datetime
 from sqlalchemy.orm import sessionmaker
-from .database import engine, SessionLocal
-from .models import Investment, User, Notification
+from database import engine, SessionLocal
+from models import Investment, User, Notification
 import logging
 
 # Optional SendGrid for email alerts

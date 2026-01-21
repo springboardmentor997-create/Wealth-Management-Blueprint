@@ -5,10 +5,10 @@ from datetime import datetime
 import uuid
 import numpy as np
 
-from ..database import get_db
-from ..models import User, Goal
-from ..schemas import SimulationRequest, AdhocSimulationRequest, SimulationResult
-from ..auth import get_current_user
+from database import get_db
+from models import User, Goal
+from schemas import SimulationRequest, AdhocSimulationRequest, SimulationResult
+from auth import get_current_user
 
 router = APIRouter(prefix="/api/simulations", tags=["simulations"])
 

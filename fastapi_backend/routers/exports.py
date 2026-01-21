@@ -9,9 +9,9 @@ import csv
 import io
 from datetime import datetime
 
-from ..database import get_db
-from ..models import User, Goal, Investment, Transaction
-from ..auth import get_current_user
+from database import get_db
+from models import User, Goal, Investment, Transaction
+from auth import get_current_user
 
 router = APIRouter(prefix="/api/exports", tags=["exports"])
 

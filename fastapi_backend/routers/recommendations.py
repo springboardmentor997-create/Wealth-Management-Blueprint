@@ -3,10 +3,10 @@ from sqlalchemy.orm import Session
 from typing import List
 import uuid
 
-from ..database import get_db
-from ..models import User, Investment, Goal
-from ..schemas import Recommendation, RebalanceRecommendation
-from ..auth import get_current_user
+from database import get_db
+from models import User, Investment, Goal
+from schemas import Recommendation, RebalanceRecommendation
+from auth import get_current_user
 
 router = APIRouter(prefix="/api/recommendations", tags=["recommendations"])
 

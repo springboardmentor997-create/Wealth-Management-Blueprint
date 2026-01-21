@@ -6,10 +6,10 @@ import os
 from datetime import datetime
 import uuid
 
-from ..models import User, KYCRequest
-from .. import schemas
-from ..database import get_db
-from ..dependencies import get_current_user, get_admin_user
+from models import User, KYCRequest
+import schemas
+from database import get_db
+from dependencies import get_current_user, get_admin_user
 
 router = APIRouter(
     prefix="/kyc",

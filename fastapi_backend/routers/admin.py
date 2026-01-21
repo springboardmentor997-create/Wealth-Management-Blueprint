@@ -10,10 +10,10 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 
-from ..database import get_db
-from ..models import User, Goal, Investment, Transaction, KYCRequest
-from ..schemas import User as UserSchema, AdminUserUpdate, CreditUpdate, AdminDashboardData, AdminUserView
-from ..dependencies import get_admin_user
+from database import get_db
+from models import User, Goal, Investment, Transaction, KYCRequest
+from schemas import User as UserSchema, AdminUserUpdate, CreditUpdate, AdminDashboardData, AdminUserView
+from dependencies import get_admin_user
 from datetime import datetime
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])

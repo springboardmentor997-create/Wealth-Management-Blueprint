@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from ..database import get_db
-from ..models import Investment, User
-from ..schemas import PortfolioSummary
-from ..auth import get_current_user
-from ..market_service import MarketDataService
+from database import get_db
+from models import Investment, User
+from schemas import PortfolioSummary
+from auth import get_current_user
+from market_service import MarketDataService
 
 router = APIRouter(prefix="/api/portfolio", tags=["portfolio"])
 

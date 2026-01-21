@@ -4,10 +4,10 @@ from typing import List
 from datetime import datetime
 import uuid
 
-from ..database import get_db
-from ..models import Transaction, User
-from ..schemas import TransactionCreate, Transaction as TransactionSchema
-from ..auth import get_current_user
+from database import get_db
+from models import Transaction, User
+from schemas import TransactionCreate, Transaction as TransactionSchema
+from auth import get_current_user
 
 router = APIRouter(prefix="/api/transactions", tags=["transactions"])
 
