@@ -117,7 +117,7 @@ class User(BaseModel):
     id: str
     name: str
     email: str
-    risk_profile: str
+    risk_profile: Optional[str] = "moderate"
     kyc_status: Optional[str] = "unverified"
     is_admin: Optional[str] = "false"
     profile_picture: Optional[str] = None
