@@ -111,18 +111,21 @@ async def login(login_data: UserLogin, db: Session = Depends(get_db)):
         logger.info(f"User query took {query_time:.3f}s for email: {login_data.email}")
         
         if not user:
-            raise HTTPException(status_code=404, detail="User not found. Please register first.")
+            logger.warning(f"Login attempt failed: User not found for email: {login_data.email}")
+            raise HTTPException(status_code=401, detail="Invalid email or password")
         
         # Verify password
         try:
             pwd_start = time.time()
             is_valid = verify_password(login_data.password, user.password)
             pwd_time = time.time() - pwd_start
-            logger.info(f"Password verification took {pwd_time:.3f}s")
+            logger.info(f"Password verification took {pwd_time:.3f}s, result: {is_valid}")
             
             if not is_valid:
-                raise HTTPException(status_code=401, detail="Invalid password")
+                logger.warning(f"Login attempt failed: Invalid password for email: {login_data.email}")
+                raise HTTPException(status_code=401, detail="Invalid email or password")
         except ValueError as ve:
+            logger.error(f"Password verification error: {str(ve)}")
             raise HTTPException(status_code=400, detail=str(ve))
         
         # Update login tracking
