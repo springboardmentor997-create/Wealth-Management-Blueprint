@@ -4,9 +4,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import Response, FileResponse  # 👈 Added FileResponse
 import os
 from pathlib import Path  # 👈 Added for robust path finding
-from .models import Base
-from .database import engine
-from .routers import auth, goals, investments, transactions, portfolio, simulations, recommendations, reports, market, admin, calculators, dashboard, notifications, kyc
+from models import Base
+from database import engine
+from routers import auth, goals, investments, transactions, portfolio, simulations, recommendations, reports, market, admin, calculators, dashboard, notifications, kyc
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
