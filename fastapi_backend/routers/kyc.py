@@ -28,6 +28,22 @@ async def submit_kyc(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    # Handle file upload first
+    file_path = None
+    if document_proof:
+        upload_dir = "uploads/kyc_documents"
+        os.makedirs(upload_dir, exist_ok=True)
+        # Generate safe filename
+        extension = os.path.splitext(document_proof.filename)[1]
+        filename = f"{current_user.id}_{uuid.uuid4()}{extension}"
+        local_file_path = f"{upload_dir}/{filename}"
+        
+        with open(local_file_path, "wb") as buffer:
+            shutil.copyfileobj(document_proof.file, buffer)
+        
+        # Store relative path for frontend access
+        file_path = f"/static/kyc_documents/{filename}"
+
     # Check if KYC already exists
     existing_kyc = db.query(KYCRequest).filter(KYCRequest.user_id == current_user.id).first()
     if existing_kyc:
@@ -37,41 +53,33 @@ async def submit_kyc(
         elif existing_kyc.status == "pending":
              raise HTTPException(status_code=400, detail="KYC verification is already in progress")
         
-        # If user is re-submitting after rejection (or update which we treat as re-submit), delete old request or update it.
-        # Let's update it.
+        # Update existing record
+        existing_kyc.full_name = full_name
+        existing_kyc.dob = dob
+        existing_kyc.document_type = document_type
+        existing_kyc.document_number = document_number
+        existing_kyc.address = address
+        if file_path:
+            existing_kyc.document_proof_url = file_path
+        existing_kyc.status = "pending"
+        existing_kyc.submitted_at = datetime.utcnow()
+        existing_kyc.admin_comments = None
         kyc_request = existing_kyc
     else:
-        kyc_request = KYCRequest(user_id=current_user.id)
+        # Create new KYC request with all required fields
+        kyc_request = KYCRequest(
+            user_id=current_user.id,
+            full_name=full_name,
+            dob=dob,
+            document_type=document_type,
+            document_number=document_number,
+            address=address,
+            document_proof_url=file_path,
+            status="pending",
+            submitted_at=datetime.utcnow(),
+            admin_comments=None
+        )
         db.add(kyc_request)
-
-    # Handle file upload
-    file_path = kyc_request.document_proof_url
-    if document_proof:
-        upload_dir = "uploads/kyc_documents"
-        os.makedirs(upload_dir, exist_ok=True)
-        # Generate safe filename
-        extension = os.path.splitext(document_proof.filename)[1]
-        filename = f"{current_user.id}_{uuid.uuid4()}{extension}"
-        file_path = f"{upload_dir}/{filename}"
-        
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(document_proof.file, buffer)
-        
-        # Store relative path for frontend access (need to mount this dir if we want admin to see it)
-        # Assuming '/static' mounts 'uploads'
-        file_path = f"/static/kyc_documents/{filename}"
-
-    kyc_request.full_name = full_name
-    kyc_request.dob = dob
-    kyc_request.document_type = document_type
-    kyc_request.document_number = document_number
-    kyc_request.address = address
-    if file_path:
-        kyc_request.document_proof_url = file_path
-    
-    kyc_request.status = "pending"
-    kyc_request.submitted_at = datetime.utcnow()
-    kyc_request.admin_comments = None # Clear previous rejection comments
 
     # Update User status as well
     current_user.kyc_status = "pending"
