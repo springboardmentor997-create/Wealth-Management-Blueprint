@@ -124,7 +124,7 @@ class User(BaseModel):
     credits: Optional[float] = 0.0
     login_count: Optional[int] = 0
     last_login: Optional[datetime] = None
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
     @validator('risk_profile', pre=True, always=True)
     def set_risk_profile(cls, v):

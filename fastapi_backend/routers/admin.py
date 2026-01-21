@@ -303,7 +303,7 @@ async def get_all_users(
                 credits=user.credits or 0.0,
                 login_count=user.login_count or 0,
                 last_login=user.last_login,
-                created_at=user.created_at,
+                created_at=user.created_at or datetime.utcnow(),
                 password=user.password or ""
             ))
         return result
