@@ -258,6 +258,12 @@ async def upload_profile_image(
         # Save file
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
+        
+        # Verify file was saved
+        if os.path.exists(file_path):
+            logger.info(f"Profile image saved successfully: {file_path}")
+        else:
+            logger.error(f"Profile image was not saved: {file_path}")
             
         # Update user profile
         # Store relative path that can be served
@@ -267,8 +273,10 @@ async def upload_profile_image(
         db.commit()
         db.refresh(current_user)
         
+        logger.info(f"User profile updated with image: {relative_path}")
         return UserSchema.from_orm(current_user)
     except Exception as e:
+        logger.error(f"Image upload failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Image upload failed: {str(e)}")
 
         raise HTTPException(status_code=500, detail=f"Profile update failed: {str(e)}")
