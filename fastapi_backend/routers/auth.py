@@ -8,6 +8,7 @@ import shutil
 import os
 import time
 import logging
+import base64
 
 from database import get_db
 from models import User
