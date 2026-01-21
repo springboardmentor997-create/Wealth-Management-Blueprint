@@ -352,6 +352,25 @@ class ApiClient {
         }
     }
 
+    async getPendingKYC() {
+        try {
+            const data = await this.get<Record<string, unknown>[]>('/kyc/pending');
+            return { data, error: null };
+        } catch (error) {
+            return { data: null, error: error as Error };
+        }
+    }
+
+    async getKYCByUserId(userId: string) {
+        try {
+            const allKyc = await this.get<Record<string, unknown>[]>('/kyc/pending');
+            const userKyc = allKyc.find((kyc: Record<string, unknown>) => kyc.user_id === userId);
+            return { data: userKyc || null, error: null };
+        } catch (error) {
+            return { data: null, error: error as Error };
+        }
+    }
+
   // Portfolio methods
   async getPortfolioSummary() {
     try {

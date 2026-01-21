@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Edit, Trash2, Search, Loader2 } from 'lucide-react';
+import { Edit, Trash2, Search, Loader2, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/services/api';
 
@@ -25,10 +25,28 @@ interface User {
   created_at: string;
 }
 
+interface KYCDetails {
+  id: string;
+  user_id: string;
+  full_name: string;
+  dob: string;
+  document_type: string;
+  document_number: string;
+  address: string;
+  document_proof_url: string | null;
+  status: string;
+  admin_comments: string | null;
+  submitted_at: string;
+  verified_at: string | null;
+}
+
 export function UsersTab() {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [viewingKYC, setViewingKYC] = useState<KYCDetails | null>(null);
+  const [isKYCDialogOpen, setIsKYCDialogOpen] = useState(false);
+  const [isLoadingKYC, setIsLoadingKYC] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -130,6 +148,21 @@ export function UsersTab() {
     if (editingUser) editUserMutation.mutate(editingUser);
   };
 
+  const handleViewKYC = async (user: User) => {
+    setIsLoadingKYC(true);
+    setIsKYCDialogOpen(true);
+    try {
+      const { data, error } = await apiClient.getKYCByUserId(user.id);
+      if (error) throw error;
+      setViewingKYC(data as KYCDetails);
+    } catch (err) {
+      toast({ title: "Error", description: "Could not load KYC details", variant: "destructive" });
+      setIsKYCDialogOpen(false);
+    } finally {
+      setIsLoadingKYC(false);
+    }
+  };
+
   if (isLoading) {
       return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
@@ -180,7 +213,18 @@ export function UsersTab() {
                   <TableCell>{user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      {user.kyc_status !== 'verified' && (
+                      {(user.kyc_status === 'pending' || user.kyc_status === 'verified') && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          onClick={() => handleViewKYC(user)}
+                          title="View KYC Documents"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {user.kyc_status === 'pending' && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -298,6 +342,99 @@ export function UsersTab() {
             </Button>
             <Button onClick={handleSaveUser} disabled={editUserMutation.isPending}>
               {editUserMutation.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View KYC Dialog */}
+      <Dialog open={isKYCDialogOpen} onOpenChange={setIsKYCDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>KYC Document Details</DialogTitle>
+            <DialogDescription>
+              Review the submitted KYC information
+            </DialogDescription>
+          </DialogHeader>
+          
+          {isLoadingKYC ? (
+            <div className="flex justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : viewingKYC ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Full Name</Label>
+                  <p className="font-medium">{viewingKYC.full_name}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Date of Birth</Label>
+                  <p className="font-medium">{viewingKYC.dob}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Document Type</Label>
+                  <p className="font-medium uppercase">{viewingKYC.document_type}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Document Number</Label>
+                  <p className="font-medium">{viewingKYC.document_number}</p>
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-muted-foreground">Address</Label>
+                  <p className="font-medium">{viewingKYC.address}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Status</Label>
+                  <p>{getStatusBadge(viewingKYC.status)}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Submitted At</Label>
+                  <p className="font-medium">{new Date(viewingKYC.submitted_at).toLocaleString()}</p>
+                </div>
+              </div>
+              
+              {viewingKYC.document_proof_url && (
+                <div className="border rounded-lg p-4">
+                  <Label className="text-muted-foreground">Document Proof</Label>
+                  <div className="mt-2">
+                    {viewingKYC.document_proof_url.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                      <img 
+                        src={viewingKYC.document_proof_url} 
+                        alt="KYC Document" 
+                        className="max-w-full h-auto rounded border"
+                      />
+                    ) : (
+                      <a 
+                        href={viewingKYC.document_proof_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline flex items-center gap-2"
+                      >
+                        <Eye className="h-4 w-4" />
+                        View Document
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {viewingKYC.admin_comments && (
+                <div>
+                  <Label className="text-muted-foreground">Admin Comments</Label>
+                  <p className="font-medium text-orange-600">{viewingKYC.admin_comments}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              No KYC submission found for this user.
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsKYCDialogOpen(false)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
