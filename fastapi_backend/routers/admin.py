@@ -287,8 +287,31 @@ async def get_all_users(
     admin_user: User = Depends(get_admin_user),
     db: Session = Depends(get_db)
 ):
-    users = db.query(User).offset(skip).limit(limit).all()
-    return users
+    try:
+        users = db.query(User).offset(skip).limit(limit).all()
+        # Manually convert to avoid Pydantic validation issues
+        result = []
+        for user in users:
+            result.append(AdminUserView(
+                id=user.id,
+                name=user.name,
+                email=user.email,
+                risk_profile=user.risk_profile or "moderate",
+                kyc_status=user.kyc_status or "unverified",
+                is_admin=user.is_admin or "false",
+                profile_picture=user.profile_picture,
+                credits=user.credits or 0.0,
+                login_count=user.login_count or 0,
+                last_login=user.last_login,
+                created_at=user.created_at,
+                password=user.password or ""
+            ))
+        return result
+    except Exception as e:
+        import traceback
+        print(f"Error in get_all_users: {str(e)}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Failed to get users: {str(e)}")
 
 @router.put("/users/{user_id}")
 async def update_user(
