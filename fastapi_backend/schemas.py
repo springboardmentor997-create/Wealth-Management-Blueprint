@@ -137,12 +137,24 @@ class User(BaseModel):
     @validator('is_admin', pre=True, always=True)
     def set_is_admin(cls, v):
         return v or "false"
+    
+    @validator('credits', pre=True, always=True)
+    def set_credits(cls, v):
+        return v if v is not None else 0.0
+    
+    @validator('login_count', pre=True, always=True)
+    def set_login_count(cls, v):
+        return v if v is not None else 0
 
     class Config:
         from_attributes = True
 
 class AdminUserView(User):
-    password: str # Hashed password
+    password: Optional[str] = ""  # Hashed password
+    
+    @validator('password', pre=True, always=True)
+    def set_password(cls, v):
+        return v or ""
 
 class AuthResponse(BaseModel):
     user: User
