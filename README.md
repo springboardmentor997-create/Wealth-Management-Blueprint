@@ -1,10 +1,4 @@
-Got it 👍
-I’ll give you a **clean, professional `README.md`** suitable for an **internship submission** for the branch
-`Sabarisha-Team2-Backend` of **Wealth-Management-Blueprint**.
 
-You can **copy-paste this directly** into `README.md`.
-
----
 
 # Wealth Management Blueprint
 
