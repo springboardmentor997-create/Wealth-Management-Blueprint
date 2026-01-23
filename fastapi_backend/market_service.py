@@ -55,8 +55,8 @@ class MarketDataService:
             if len(symbols) == 1:
                 # df is simple dataframe
                 close_prices = df['Close']
-                # Fill NaNs
-                close_prices = close_prices.fillna(method='ffill').fillna(method='bfill')
+                # Fill NaNs - use ffill() and bfill() instead of deprecated fillna(method=...)
+                close_prices = close_prices.ffill().bfill()
                 total_series = close_prices * symbol_map[symbols[0]]
             else:
                 for symbol in symbols:
@@ -68,7 +68,7 @@ class MarketDataService:
                             # Fallback if download failed for one
                             continue
                             
-                        s_data = s_data.fillna(method='ffill').fillna(method='bfill')
+                        s_data = s_data.ffill().bfill()
                         val_series = s_data * symbol_map[symbol]
                         
                         if total_series is None:
