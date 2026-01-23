@@ -247,35 +247,33 @@ async def upload_profile_image(
     db: Session = Depends(get_db)
 ):
     try:
-        # Create directory if it doesn't exist
-        upload_dir = "uploads/profile_pictures"
-        os.makedirs(upload_dir, exist_ok=True)
+        # Validate file type
+        allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+        if file.content_type not in allowed_types:
+            raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.")
         
-        # Generate unique filename
-        file_extension = os.path.splitext(file.filename)[1]
-        filename = f"{current_user.id}_{uuid.uuid4()}{file_extension}"
-        file_path = os.path.join(upload_dir, filename)
+        # Read file content and convert to Base64
+        file_content = await file.read()
         
-        # Save file
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        # Limit file size (e.g., 2MB)
+        max_size = 2 * 1024 * 1024  # 2MB
+        if len(file_content) > max_size:
+            raise HTTPException(status_code=400, detail="File too large. Maximum size is 2MB.")
         
-        # Verify file was saved
-        if os.path.exists(file_path):
-            logger.info(f"Profile image saved successfully: {file_path}")
-        else:
-            logger.error(f"Profile image was not saved: {file_path}")
-            
-        # Update user profile
-        # Store relative path that can be served
-        relative_path = f"/static/profile_pictures/{filename}"
-        current_user.profile_picture = relative_path
+        # Convert to Base64 data URI
+        base64_encoded = base64.b64encode(file_content).decode('utf-8')
+        data_uri = f"data:{file.content_type};base64,{base64_encoded}"
+        
+        # Store Base64 data URI in database
+        current_user.profile_picture = data_uri
         
         db.commit()
         db.refresh(current_user)
         
-        logger.info(f"User profile updated with image: {relative_path}")
+        logger.info(f"User profile updated with Base64 image for user: {current_user.id}")
         return UserSchema.from_orm(current_user)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Image upload failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Image upload failed: {str(e)}")
