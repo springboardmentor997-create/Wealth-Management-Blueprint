@@ -9,6 +9,8 @@ import os
 import time
 import logging
 import base64
+from io import BytesIO
+from PIL import Image
 
 from database import get_db
 from models import User
@@ -252,17 +254,35 @@ async def upload_profile_image(
         if file.content_type not in allowed_types:
             raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.")
         
-        # Read file content and convert to Base64
+        # Read file content
         file_content = await file.read()
         
-        # Limit file size (e.g., 2MB)
-        max_size = 2 * 1024 * 1024  # 2MB
+        # Limit file size (e.g., 5MB before compression)
+        max_size = 5 * 1024 * 1024  # 5MB
         if len(file_content) > max_size:
-            raise HTTPException(status_code=400, detail="File too large. Maximum size is 2MB.")
+            raise HTTPException(status_code=400, detail="File too large. Maximum size is 5MB.")
+        
+        # Open image and resize/compress
+        image = Image.open(BytesIO(file_content))
+        
+        # Convert to RGB if necessary (for PNG with transparency)
+        if image.mode in ('RGBA', 'P'):
+            image = image.convert('RGB')
+        
+        # Resize to max 200x200 (profile picture size)
+        max_dimension = 200
+        image.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
+        
+        # Save compressed image to bytes
+        output_buffer = BytesIO()
+        image.save(output_buffer, format='JPEG', quality=85, optimize=True)
+        compressed_content = output_buffer.getvalue()
         
         # Convert to Base64 data URI
-        base64_encoded = base64.b64encode(file_content).decode('utf-8')
-        data_uri = f"data:{file.content_type};base64,{base64_encoded}"
+        base64_encoded = base64.b64encode(compressed_content).decode('utf-8')
+        data_uri = f"data:image/jpeg;base64,{base64_encoded}"
+        
+        logger.info(f"Compressed image size: {len(data_uri)} chars (from {len(file_content)} bytes)")
         
         # Store Base64 data URI in database
         current_user.profile_picture = data_uri
@@ -270,7 +290,7 @@ async def upload_profile_image(
         db.commit()
         db.refresh(current_user)
         
-        logger.info(f"User profile updated with Base64 image for user: {current_user.id}")
+        logger.info(f"User profile updated with compressed Base64 image for user: {current_user.id}")
         return UserSchema.from_orm(current_user)
     except HTTPException:
         raise
