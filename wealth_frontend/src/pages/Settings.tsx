@@ -300,7 +300,10 @@ const Settings = () => {
                   <div className="flex items-center gap-4">
                     <Avatar className="h-20 w-20">
                       {user.profile_picture ? (
-                        <AvatarImage src={`${API_BASE_URL}${user.profile_picture}`} alt={user.name} />
+                        <AvatarImage 
+                          src={user.profile_picture.startsWith('data:') ? user.profile_picture : `${API_BASE_URL}${user.profile_picture}`} 
+                          alt={user.name} 
+                        />
                       ) : null}
                       <AvatarFallback className="bg-primary text-primary-foreground text-xl font-bold">
                         {user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
