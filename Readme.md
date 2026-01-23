@@ -16,7 +16,7 @@
   A modern, scalable wealth management platform built during an internship, focusing on clean backend architecture, real-world project structure, and seamless frontend integration.
 </p>
 
-
+---
 
 ## 🚀 Overview
 
@@ -25,7 +25,7 @@ It provides secure authentication, portfolio tracking, investment management, fi
 
 This branch represents the **Team 2 backend-focused implementation**, integrated with a modern frontend and built for **internship evaluation and learning**.
 
-
+---
 
 ## ✨ What Makes This Project Strong
 
@@ -36,9 +36,11 @@ This branch represents the **Team 2 backend-focused implementation**, integrated
 ✅ Modern React + TypeScript frontend  
 ✅ Maintainable, real-world folder layout  
 
+---
 
 ## 🧠 Architecture at a Glance
 
+```
 
 Client (React + TS)
 ↓
@@ -48,11 +50,13 @@ Database (PostgreSQL)
 ↓
 Reports / Files / Background Tasks
 
+```
 
+---
 
 ## 📁 Project Structure
 
-
+```
 
 wealth_tracker/
 ├── docs/                      # Documentation
@@ -77,6 +81,10 @@ wealth_tracker/
 │
 └── uploads/                    # Generated user files
 
+````
+
+---
+
 ## 🛠️ Tech Stack
 
 ### 🔹 Backend
@@ -95,6 +103,8 @@ wealth_tracker/
 - **shadcn/ui**
 - **Axios**
 
+---
+
 ## 🔐 Core Features
 
 - Secure user authentication and authorization  
@@ -104,6 +114,8 @@ wealth_tracker/
 - Market data handling  
 - Admin dashboard and analytics  
 - Role-based access control  
+
+---
 
 ## ⚙️ Getting Started
 
@@ -151,3 +163,11 @@ This implementation was developed as part of an **internship program** to demons
 
 This project is intended strictly for **educational and internship purposes only**.
 
+```
+
+---
+
+
+
+Just tell me what level you want 👌
+```
