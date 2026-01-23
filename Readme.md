@@ -1,173 +1,142 @@
 
 
----
+# Wealth Management Blueprint
 
-```markdown
-<p align="center">
-  <img src="https://img.shields.io/badge/Status-Internship%20Project-blue?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/Backend-FastAPI-success?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/Frontend-React%20%2B%20TypeScript-informational?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/Database-PostgreSQL-blueviolet?style=for-the-badge"/>
-</p>
+### Team 2 – Backend & Full Stack Implementation
 
-<h1 align="center">💼 Wealth Management Blueprint</h1>
+This repository contains the **Wealth Management Blueprint** project developed as part of an **internship assignment**.
+The project focuses on building a **full-stack wealth management platform** with a scalable backend and a modern frontend.
 
-<p align="center">
-  A modern, scalable wealth management platform built during an internship, focusing on clean backend architecture, real-world project structure, and seamless frontend integration.
-</p>
+Branch: **Keerthana-Team2-Backend**
 
 ---
 
-## 🚀 Overview
+## 📌 Project Overview
 
-**Wealth Management Blueprint** is a full-stack financial application designed to help users manage and analyze their wealth efficiently.  
-It provides secure authentication, portfolio tracking, investment management, financial reports, and admin-level analytics using a modular and production-style architecture.
+The Wealth Management Blueprint is designed to help users manage their financial activities including:
 
-This branch represents the **Team 2 backend-focused implementation**, integrated with a modern frontend and built for **internship evaluation and learning**.
+* Portfolio tracking
+* Investments & transactions
+* Goals and simulations
+* Reports and analytics
+* Authentication & role-based access
 
----
-
-## ✨ What Makes This Project Strong
-
-✅ Industry-standard backend structure  
-✅ Secure authentication & authorization  
-✅ Clean API design with FastAPI  
-✅ Scalable PostgreSQL database  
-✅ Modern React + TypeScript frontend  
-✅ Maintainable, real-world folder layout  
+The project follows **industry-standard backend architecture** and a **component-based frontend design**.
 
 ---
 
-## 🧠 Architecture at a Glance
+## 🏗️ Project Structure
 
 ```
-
-Client (React + TS)
-↓
-REST API (FastAPI)
-↓
-Database (PostgreSQL)
-↓
-Reports / Files / Background Tasks
-
-```
-
----
-
-## 📁 Project Structure
-
-```
-
-wealth_tracker/
-├── docs/                      # Documentation
+wealth tracker/
+├── docs/
+│   └── market_sync.md
 │
-├── fastapi_backend/            # Backend (FastAPI)
+├── fastapi_backend/
 │   ├── main.py
-│   ├── auth.py
 │   ├── database.py
+│   ├── auth.py
 │   ├── models.py
 │   ├── schemas.py
 │   ├── routers/
 │   ├── migrations/
 │   ├── static/
 │   ├── uploads/
-│   └── requirements.txt
+│   ├── requirements.txt
+│   └── alembic.ini
 │
-├── wealth_frontend/            # Frontend (React + TypeScript)
+├── wealth_frontend/
 │   ├── src/
 │   ├── public/
+│   ├── components.json
 │   ├── package.json
-│   └── vite.config.ts
+│   ├── vite.config.ts
+│   └── tailwind.config.ts
 │
-└── uploads/                    # Generated user files
-
-````
-
----
-
-## 🛠️ Tech Stack
-
-### 🔹 Backend
-- **FastAPI**
-- **PostgreSQL**
-- **SQLAlchemy**
-- **Alembic (Migrations)**
-- **JWT Authentication**
-- **Celery (Background Jobs)**
-
-### 🔹 Frontend
-- **React**
-- **TypeScript**
-- **Vite**
-- **Tailwind CSS**
-- **shadcn/ui**
-- **Axios**
+└── uploads/
+```
 
 ---
 
-## 🔐 Core Features
+## ⚙️ Tech Stack
 
-- Secure user authentication and authorization  
-- Portfolio and transaction management  
-- Investment recommendations and simulations  
-- Financial report generation (PDF)  
-- Market data handling  
-- Admin dashboard and analytics  
-- Role-based access control  
+### Backend
+
+* **FastAPI**
+* **PostgreSQL**
+* **SQLAlchemy**
+* **Alembic (Migrations)**
+* **JWT Authentication**
+* **Celery (Background Tasks)**
+
+### Frontend
+
+* **React + TypeScript**
+* **Vite**
+* **Tailwind CSS**
+* **shadcn/ui**
+* **Axios**
 
 ---
 
-## ⚙️ Getting Started
+## 🔐 Key Features
 
-### ▶ Backend Setup
+* User authentication & authorization
+* Portfolio & transaction management
+* Investment recommendations
+* Financial reports (PDF generation)
+* Market data handling
+* Admin dashboard
+* Modular & scalable architecture
+
+---
+
+## 🚀 Setup Instructions
+
+### Backend Setup
+
 ```bash
-cd fastapi_backend
+cd wealth tracker/fastapi_backend
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn main:app --reload
-````
+```
 
-### ▶ Frontend Setup
+### Frontend Setup
 
 ```bash
-cd wealth_frontend
+cd wealth tracker/wealth_frontend
 npm install
 npm run dev
 ```
 
 ---
 
+## 📊 Database
+
+* PostgreSQL
+* Migrations handled using **Alembic**
+* Schema designed for scalability and clarity
+
+---
+
 ## 🧪 Development Notes
 
 * Environment variables are documented in `.env.example`
-* API routes are organized using FastAPI routers
-* Backend and frontend responsibilities are clearly separated
-* Codebase follows readability and maintainability principles
+* API routes are modularized using FastAPI routers
+* Frontend follows reusable component patterns
+* Clean separation between backend and frontend logic
 
 ---
 
 ## 👨‍💻 Internship Contribution
 
 **Contributor:**
-**Kousika Sabarisha**
+**Keerthana Sarvani Sathuluri**
 
 **Branch:**
 `Keerthana-Team2-Backend`
 
-This implementation was developed as part of an **internship program** to demonstrate backend architecture, database design, API development, and frontend integration using modern web technologies.
-
----
-
-## 📄 License
-
-This project is intended strictly for **educational and internship purposes only**.
-
-```
-
----
-
-
-
-Just tell me what level you want 👌
-```
+This branch contains the **backend implementation along with frontend integration**, developed as part of internship learning and evaluation.
+.
