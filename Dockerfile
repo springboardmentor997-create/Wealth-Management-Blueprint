@@ -28,18 +28,19 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ ./backend/
 
 # Copy Built Frontend from Stage 1
-# Copying to a path relative to /app/backend so the layout matches local dev
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
-# Set working directory to backend so imports like 'from core.database' work
-WORKDIR /app/backend
+# Set working directory to root /app
+WORKDIR /app
 
-# Set environment variables
+# Explicitly add backend to PYTHONPATH so 'import core' works from anywhere
+ENV PYTHONPATH=/app/backend
 ENV PYTHONUNBUFFERED=1
 
 # Expose port
 EXPOSE 8000
 
 # Run Application
-# main.py is in the current directory (/app/backend)
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run as a module from the root. 'backend.main' works because PYTHONPATH includes /app/backend
+# AND 'backend' is a package under /app.
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
