@@ -8,10 +8,7 @@ from core.security import get_password_hash, verify_password, create_access_toke
 from services.email_service import send_password_reset_email
 import secrets
 from datetime import datetime, timedelta
-from google.auth.transport import requests
-from google.oauth2 import id_token
-from core.config import settings
-import requests as http_requests
+
 import json
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -68,12 +65,7 @@ class ResetPasswordPayload(BaseModel):
     new_password: str
 
 
-class GoogleLoginPayload(BaseModel):
-    token: str
 
-
-class GoogleCodePayload(BaseModel):
-    code: str
 
 
 @router.post("/forgot-password")
@@ -126,137 +118,4 @@ def reset_password(payload: ResetPasswordPayload, session: Session = Depends(get
     return {"message": "Password reset successfully"}
 
 
-@router.post("/google-login")
-def google_login(payload: GoogleLoginPayload, session: Session = Depends(get_session)):
-    """Login or register user with Google OAuth token"""
-    try:
-        # Verify the Google ID token
-        idinfo = id_token.verify_oauth2_token(
-            payload.token,
-            requests.Request(),
-            settings.GOOGLE_CLIENT_ID
-        )
 
-        # Extract user information from token
-        email = idinfo.get('email')
-        name = idinfo.get('name', email.split('@')[0])
-        google_id = idinfo.get('sub')
-
-        if not email:
-            raise HTTPException(status_code=400, detail="Email not found in Google token")
-
-        # Check if user exists
-        user = session.exec(select(User).where(User.email == email)).first()
-
-        if not user:
-            # Create new user from Google data
-            # Generate a random password for Google-registered users
-            random_password = secrets.token_urlsafe(16)
-            user = User(
-                name=name,
-                email=email,
-                password=get_password_hash(random_password),
-                risk_profile="moderate"
-            )
-            session.add(user)
-            session.commit()
-            session.refresh(user)
-
-        # Create JWT token
-        token = create_access_token({"sub": str(user.id), "email": user.email})
-        return {
-            "access_token": token,
-            "token_type": "bearer",
-            "user": {
-                "id": user.id,
-                "name": user.name,
-                "email": user.email,
-                "risk_profile": user.risk_profile
-            }
-        }
-
-    except ValueError as e:
-        raise HTTPException(status_code=401, detail=f"Invalid Google token: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Google authentication failed: {str(e)}")
-
-
-@router.post("/google-callback")
-def google_callback(payload: GoogleCodePayload, session: Session = Depends(get_session)):
-    """
-    Secure OAuth 2.0 Authorization Code Flow callback.
-    Frontend sends authorization code, backend exchanges it for tokens.
-    """
-    try:
-        # Exchange authorization code for tokens
-        token_url = "https://oauth2.googleapis.com/token"
-        
-        token_data = {
-            "code": payload.code,
-            "client_id": settings.GOOGLE_CLIENT_ID,
-            "client_secret": settings.GOOGLE_CLIENT_SECRET,
-            "redirect_uri": "postmessage",  # Required for React Google Login hook (Popup flow)
-            "grant_type": "authorization_code"
-        }
-        
-        # Make request to Google's token endpoint
-        token_response = http_requests.post(token_url, data=token_data)
-        
-        if token_response.status_code != 200:
-            raise HTTPException(status_code=401, detail="Failed to exchange authorization code")
-        
-        token_json = token_response.json()
-        id_token_str = token_json.get("id_token")
-        
-        if not id_token_str:
-            raise HTTPException(status_code=401, detail="No ID token in response")
-        
-        # Verify the ID token
-        idinfo = id_token.verify_oauth2_token(
-            id_token_str,
-            requests.Request(),
-            settings.GOOGLE_CLIENT_ID
-        )
-        
-        # Extract user information
-        email = idinfo.get('email')
-        name = idinfo.get('name', email.split('@')[0])
-        
-        if not email:
-            raise HTTPException(status_code=400, detail="Email not found in Google token")
-        
-        # Check if user exists, create if not
-        user = session.exec(select(User).where(User.email == email)).first()
-        
-        if not user:
-            # Create new user from Google data
-            random_password = secrets.token_urlsafe(16)
-            user = User(
-                name=name,
-                email=email,
-                password=get_password_hash(random_password),
-                risk_profile="moderate"
-            )
-            session.add(user)
-            session.commit()
-            session.refresh(user)
-        
-        # Create JWT token for our app
-        jwt_token = create_access_token({"sub": str(user.id), "email": user.email})
-        return {
-            "access_token": jwt_token,
-            "token_type": "bearer",
-            "user": {
-                "id": user.id,
-                "name": user.name,
-                "email": user.email,
-                "risk_profile": user.risk_profile
-            }
-        }
-    
-    except ValueError as e:
-        raise HTTPException(status_code=401, detail=f"Invalid Google token: {str(e)}")
-    except http_requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Google token exchange failed: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Google authentication failed: {str(e)}")

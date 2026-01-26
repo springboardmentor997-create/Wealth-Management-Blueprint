@@ -18,9 +18,7 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
     SENDER_EMAIL: str = os.getenv("SENDER_EMAIL", "")
     SENDER_NAME: str = os.getenv("SENDER_NAME", "Wealth Manager")
-    # Google OAuth Configuration
-    GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
-    GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
+
     
     class Config:
         env_file = ".env"
