@@ -3,13 +3,33 @@ from core.security import get_current_user
 from core.database import get_session
 from models.user import User
 from sqlmodel import Session
+
 from services.market_service import (
     search_stock, 
-    get_stock
+    get_stock,
+    get_bulk_quotes,
+    get_top_assets
 )
+
+# ... (other code)
+
+
 from services.recommendation_service import generate_recommendation
 
 router = APIRouter(prefix="/market", tags=["Market"])
+
+@router.post("/quotes")
+def get_quotes_bulk(payload: dict, current_user: User = Depends(get_current_user)):
+    """
+    Get live quotes for a list of symbols.
+    Payload: {"symbols": ["AAPL", "RELIANCE.NS"]}
+    """
+    symbols = payload.get("symbols", [])
+    if not symbols:
+        return {}
+        
+    return get_bulk_quotes(symbols)
+
 
 @router.get("/search")
 def search(q: str, current_user: User = Depends(get_current_user)):
@@ -78,3 +98,12 @@ def recommend(symbol: str, current_user: User = Depends(get_current_user)):
         },
         "stock_data": stock_info
     }
+
+
+@router.get("/top/{asset_type}")
+def get_top_recommendations(asset_type: str, current_user: User = Depends(get_current_user)):
+    """
+    Get top recommendations for a specific asset category (Stock, Crypto, ETF).
+    Fetches live data from yfinance.
+    """
+    return get_top_assets(asset_type.lower())

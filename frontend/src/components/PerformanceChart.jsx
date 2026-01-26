@@ -7,12 +7,12 @@ const PerformanceChart = ({ data }) => {
   const hasGrowth = hasData && data.some((d) => (d?.value ?? 0) !== firstVal && (d?.value ?? 0) !== 0)
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow mb-8">
-      <h2 className="text-xl font-bold mb-4">Portfolio Growth</h2>
+    <div className="w-full">
+      <h2 className="text-lg font-semibold mb-4 text-slate-300">Portfolio Growth</h2>
 
       {!hasData || !hasGrowth ? (
-        <div className="h-[300px] flex items-center justify-center border-2 border-dashed border-gray-200 rounded">
-          <div className="text-gray-500">No portfolio growth data available</div>
+        <div className="h-[300px] flex items-center justify-center border-2 border-dashed border-slate-700/50 rounded-xl bg-secondary/20">
+          <div className="text-slate-400 font-medium">No portfolio growth data available</div>
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={300}>

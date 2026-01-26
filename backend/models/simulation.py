@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, Field
 from sqlalchemy import Column
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.types import JSON
 from datetime import datetime
 from typing import Optional, Dict, Any
 
@@ -14,7 +14,7 @@ class Simulation(SQLModel, table=True):
 
     scenario_name: str
 
-    assumptions: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSONB))
-    results: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSONB))
+    assumptions: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
+    results: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
 
     created_at: datetime = Field(default_factory=datetime.utcnow)

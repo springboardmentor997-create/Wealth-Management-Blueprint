@@ -12,6 +12,7 @@ class AssetType(str, Enum):
     mutual_fund = "mutual_fund"
     bond = "bond"
     cash = "cash"
+    crypto = "crypto"
 
 
 class Investment(SQLModel, table=True):

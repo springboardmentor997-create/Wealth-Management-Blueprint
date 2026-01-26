@@ -69,8 +69,8 @@ export default function Profile() {
         <RiskAssessmentQuiz onComplete={handleQuizComplete} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-bold mb-4">{editing ? 'Edit Profile' : 'Profile Information'}</h2>
+          <div className="md:col-span-2 glass-card p-6">
+            <h2 className="text-xl font-bold mb-4 text-foreground">{editing ? 'Edit Profile' : 'Profile Information'}</h2>
 
             {!editing ? (
               <div className="space-y-4">
@@ -83,12 +83,12 @@ export default function Profile() {
                   <p className="text-lg font-semibold">{profile.email || 'Not set'}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600 text-sm">Risk Profile</p>
-                  <p className="text-lg font-semibold capitalize">{profile.risk_profile}</p>
+                  <p className="text-muted-foreground text-sm">Risk Profile</p>
+                  <p className="text-lg font-semibold text-foreground capitalize">{profile.risk_profile}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600 text-sm">Account Status</p>
-                  <p className="text-lg font-semibold text-green-600">Active</p>
+                  <p className="text-muted-foreground text-sm">Account Status</p>
+                  <p className="text-lg font-semibold text-green-400">Active</p>
                 </div>
                 <button onClick={() => setEditing(true)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mt-4">
                   Edit Profile
@@ -124,20 +124,20 @@ export default function Profile() {
             )}
           </div>
 
-          <div className="bg-blue-50 p-6 rounded-lg shadow">
-            <h3 className="text-lg font-bold mb-4">Risk Profile Guide</h3>
+          <div className="glass-card p-6 border-l-4 border-blue-500">
+            <h3 className="text-lg font-bold mb-4 text-foreground">Risk Profile Guide</h3>
             <div className="space-y-4 text-sm">
               <div>
-                <p className="font-semibold text-blue-700">Conservative</p>
-                <p className="text-gray-700">Low volatility, steady returns, capital preservation focus</p>
+                <p className="font-semibold text-blue-400">Conservative</p>
+                <p className="text-muted-foreground">Low volatility, steady returns, capital preservation focus</p>
               </div>
               <div>
-                <p className="font-semibold text-blue-700">Moderate</p>
-                <p className="text-gray-700">Balanced growth and stability, mixed asset allocation</p>
+                <p className="font-semibold text-blue-400">Moderate</p>
+                <p className="text-muted-foreground">Balanced growth and stability, mixed asset allocation</p>
               </div>
               <div>
-                <p className="font-semibold text-blue-700">Aggressive</p>
-                <p className="text-gray-700">High growth potential, higher volatility, long-term focus</p>
+                <p className="font-semibold text-blue-400">Aggressive</p>
+                <p className="text-muted-foreground">High growth potential, higher volatility, long-term focus</p>
               </div>
             </div>
           </div>

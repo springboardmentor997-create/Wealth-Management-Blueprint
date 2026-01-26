@@ -9,81 +9,54 @@ def calculate_compound_interest(
     inflation_rate: float = 0.0
 ) -> Dict[str, Any]:
     """
-    Calculates compound interest projection with optional inflation adjustment.
-    
-    Args:
-        initial_amount: Starting principal
-        monthly_contribution: Amount added each month
-        annual_interest_rate: Expected annual return (in percent)
-        years: Duration in years
-        inflation_rate: Annual inflation rate (in percent)
-        
-    Returns:
-        Dict with 'summary' and 'yearly_breakdown'
+    Calculates compound interest projection matching the reference project logic.
+    - Yearly iteration
+    - Annual contribution added fully
+    - Returns reduced by inflation linearly
     """
     
-    # Calculate Real Rate of Return if inflation > 0
-    # Formula: (1 + nominal) / (1 + inflation) - 1
-    if inflation_rate > 0:
-        nominal_multiplier = 1 + (annual_interest_rate / 100)
-        inflation_multiplier = 1 + (inflation_rate / 100)
-        real_rate_percent = ((nominal_multiplier / inflation_multiplier) - 1) * 100
-        # Use real rate for calculation
-        effective_rate = real_rate_percent
-    else:
-        effective_rate = annual_interest_rate
-
-    monthly_rate = (effective_rate / 100) / 12
-    total_months = years * 12
+    current_balance = float(initial_amount)
+    total_contributions = float(initial_amount)
     
-    current_balance = initial_amount
-    total_contributions = initial_amount
+    timeline = []
     
-    yearly_data = []
-    
-    # Year 0 point
-    yearly_data.append({
+    # Year 0
+    timeline.append({
         "year": 0,
-        "balance": round(current_balance, 2),
-        "contributions": round(total_contributions, 2),
-        "interest": 0,
-        "real_value_adjustment": 0
+        "value": round(current_balance),
+        "contributed": round(total_contributions)
     })
     
-    for month in range(1, total_months + 1):
-        # Add contribution
-        current_balance += monthly_contribution
-        total_contributions += monthly_contribution
+    # Reference Logic: Iterate by year
+    for year in range(1, years + 1):
+        # Add annual contributions (Reference adds them at start/during year)
+        annual_contribution = monthly_contribution * 12
+        current_balance += annual_contribution
+        total_contributions += annual_contribution
         
-        # Add interest (using effective/real rate)
-        interest_earned = current_balance * monthly_rate
-        current_balance += interest_earned
+        # Apply Growth
+        current_balance *= (1 + annual_interest_rate / 100)
         
-        # Record at end of each year
-        if month % 12 == 0:
-            year = month // 12
-            yearly_data.append({
-                "year": year,
-                "balance": round(current_balance, 2),
-                "contributions": round(total_contributions, 2),
-                "interest": round(current_balance - total_contributions, 2)
-            })
+        # Apply Inflation (Reference Logic: value *= 1 - inflation/100)
+        # Note: This is a rough approximation used in the reference, mathematically imperfect but requested.
+        current_balance *= (1 - inflation_rate / 100)
+        
+        timeline.append({
+            "year": year,
+            "value": round(current_balance),
+            "contributed": round(total_contributions)
+        })
             
     return {
-        "status": "completed",
-        "parameters": {
-            "initial_amount": initial_amount,
-            "monthly_contribution": monthly_contribution,
-            "rate": annual_interest_rate,
-            "inflation_rate": inflation_rate,
-            "effective_rate": round(effective_rate, 2),
-            "years": years
-        },
+        "projectedValue": round(current_balance),
+        "contributed": round(total_contributions),
+        "confidence": 85, # Hardcoded in reference
+        "timeline": timeline,
+        # Keep these for backward compatibility if needed, but primary is above
         "summary": {
-            "final_balance": round(current_balance, 2),
-            "total_contributions": round(total_contributions, 2),
-            "total_interest_earned": round(current_balance - total_contributions, 2),
-            "roi_percent": round(((current_balance - total_contributions) / total_contributions) * 100, 2) if total_contributions > 0 else 0
+            "final_balance": round(current_balance),
+            "total_contributions": round(total_contributions),
+            "total_interest_earned": round(current_balance - total_contributions)
         },
-        "yearly_breakdown": yearly_data
+        "yearly_breakdown": [{"year": t["year"], "balance": t["value"], "contributions": t["contributed"]} for t in timeline]
     }

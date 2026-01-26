@@ -9,11 +9,7 @@ export default function Sidebar() {
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/goals', label: 'Goals', icon: '🎯' },
     { path: '/portfolio', label: 'Portfolio', icon: '📈' },
-    { path: '/market', label: 'Market Data', icon: '🔍' },
-    { path: '/watchlist', label: 'Watchlist', icon: '⭐' },
-    { path: '/suggestions', label: 'Suggestions', icon: '💡' },
     { path: '/reports', label: 'Reports', icon: '📄' },
-    { path: '/simulations', label: 'Simulations', icon: '🎲' },
     { path: '/calculators', label: 'Calculators', icon: '🧮' },
     { path: '/profile', label: 'Profile', icon: '👤' },
   ]

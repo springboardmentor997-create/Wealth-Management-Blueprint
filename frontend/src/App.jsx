@@ -6,17 +6,15 @@ import Navbar from './components/Navbar'
 import Sidebar from './components/Sidebar'
 
 import Dashboard from './pages/dashboard/Dashboard'
+import LandingPage from './pages/LandingPage'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import Goals from './pages/Goals'
 import Portfolio from './pages/Portfolio'
-import Market from './pages/Market'
 import Simulations from './pages/Simulations'
 import Calculators from './pages/Calculators'
 import Profile from './pages/Profile'
-import Watchlist from './pages/Watchlist'
-import PersonalizedSuggestions from './pages/PersonalizedSuggestions'
 import Reports from './pages/Reports'
 
 function Protected({ children }) {
@@ -49,20 +47,16 @@ export default function App() {
       <ToastProvider>
         <ErrorBoundary>
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
             <Route path="/goals" element={<Protected><Goals /></Protected>} />
             <Route path="/portfolio" element={<Protected><Portfolio /></Protected>} />
-            <Route path="/market" element={<Protected><Market /></Protected>} />
-            <Route path="/watchlist" element={<Protected><Watchlist /></Protected>} />
-            <Route path="/suggestions" element={<Protected><PersonalizedSuggestions /></Protected>} />
             <Route path="/reports" element={<Protected><Reports /></Protected>} />
-            <Route path="/simulations" element={<Protected><Simulations /></Protected>} />
             <Route path="/calculators" element={<Protected><Calculators /></Protected>} />
             <Route path="/profile" element={<Protected><Profile /></Protected>} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </ErrorBoundary>
       </ToastProvider>

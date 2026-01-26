@@ -19,7 +19,7 @@ const ReportsCard = () => {
           responseType: 'blob'
         }
       )
-      
+
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement('a')
       link.href = url
@@ -28,7 +28,7 @@ const ReportsCard = () => {
       link.click()
       link.parentNode.removeChild(link)
       window.URL.revokeObjectURL(url)
-      
+
       addToast(`${reportType} report downloaded successfully!`, 'success')
     } catch (error) {
       console.error('Download error:', error)
@@ -39,18 +39,18 @@ const ReportsCard = () => {
   }
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow">
-      <h2 className="text-xl font-bold mb-6">📊 Reports & Exports</h2>
+    <div className="w-full">
+      <h2 className="text-lg font-semibold mb-4 text-slate-300">📊 Reports & Exports</h2>
 
       <div className="space-y-4">
         {/* Portfolio Export */}
-        <div className="border rounded-lg p-4">
-          <h3 className="font-semibold text-lg mb-3">Portfolio Report</h3>
+        <div className="border border-white/10 rounded-lg p-4 bg-white/5">
+          <h3 className="font-semibold text-lg mb-3 text-slate-300">Portfolio Report</h3>
           <div className="flex items-center gap-3">
             <select
               value={portfolioFormat}
               onChange={(e) => setPortfolioFormat(e.target.value)}
-              className="p-2 border rounded text-sm"
+              className="p-2 border border-white/10 rounded text-sm bg-secondary text-foreground outline-none focus:border-indigo-500"
               disabled={loading === 'portfolio'}
             >
               <option value="csv">CSV</option>
@@ -59,7 +59,7 @@ const ReportsCard = () => {
             <button
               onClick={() => handleDownload('portfolio', portfolioFormat)}
               disabled={loading === 'portfolio'}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400 text-sm font-medium transition"
+              className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-400 text-sm font-medium transition shadow-lg shadow-indigo-500/20"
             >
               {loading === 'portfolio' ? '⏳ Downloading...' : '⬇ Download'}
             </button>
@@ -67,13 +67,13 @@ const ReportsCard = () => {
         </div>
 
         {/* Goals Export */}
-        <div className="border rounded-lg p-4">
-          <h3 className="font-semibold text-lg mb-3">Goals Report</h3>
+        <div className="border border-white/10 rounded-lg p-4 bg-white/5">
+          <h3 className="font-semibold text-lg mb-3 text-slate-300">Goals Report</h3>
           <div className="flex items-center gap-3">
             <select
               value={goalsFormat}
               onChange={(e) => setGoalsFormat(e.target.value)}
-              className="p-2 border rounded text-sm"
+              className="p-2 border border-white/10 rounded text-sm bg-secondary text-foreground outline-none focus:border-indigo-500"
               disabled={loading === 'goals'}
             >
               <option value="csv">CSV</option>
@@ -82,7 +82,7 @@ const ReportsCard = () => {
             <button
               onClick={() => handleDownload('goals', goalsFormat)}
               disabled={loading === 'goals'}
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400 text-sm font-medium transition"
+              className="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-400 text-sm font-medium transition shadow-lg shadow-emerald-500/20"
             >
               {loading === 'goals' ? '⏳ Downloading...' : '⬇ Download'}
             </button>

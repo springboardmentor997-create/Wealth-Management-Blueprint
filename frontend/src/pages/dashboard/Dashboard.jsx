@@ -6,9 +6,9 @@ import { getSummary, getPerformance } from '../../api/dashboardApi'
 
 const StatItem = ({ title, value, subtext }) => (
   <div className="flex flex-col">
-    <p className="text-sm font-medium text-slate-500 uppercase tracking-wide">{title}</p>
-    <p className="text-2xl font-bold text-slate-800 mt-1">{value}</p>
-    {subtext && <p className="text-xs text-slate-400 mt-1">{subtext}</p>}
+    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
+    <p className="text-2xl font-bold text-foreground mt-1">{value}</p>
+    {subtext && <p className="text-xs text-muted-foreground/80 mt-1">{subtext}</p>}
   </div>
 )
 
@@ -34,12 +34,12 @@ export default function Dashboard() {
 
   if (loading) return (
     <div className="h-full flex flex-col gap-4 animate-pulse">
-      <div className="h-32 bg-slate-200 rounded-xl w-full"></div>
-      <div className="h-64 bg-slate-200 rounded-xl w-full"></div>
+      <div className="h-32 bg-secondary/50 rounded-xl w-full"></div>
+      <div className="h-64 bg-secondary/50 rounded-xl w-full"></div>
     </div>
   )
 
-  if (!summary) return <div className="p-4 bg-red-50 text-red-600 rounded-lg border border-red-200">Failed to load dashboard data.</div>
+  if (!summary) return <div className="p-4 bg-red-500/10 text-red-400 rounded-lg border border-red-500/20">Failed to load dashboard data.</div>
 
   return (
     <div className="space-y-6">
@@ -59,7 +59,7 @@ export default function Dashboard() {
           { title: "Total Invested", value: `₹${(summary.total_invested || 0).toLocaleString()}`, sub: "+12% from last month", color: "border-indigo-500", delay: "0ms" },
           { title: "Goals Active", value: summary.total_goals || 0, sub: `${summary.completed_goals || 0} completed`, color: "border-emerald-500", delay: "100ms" },
           { title: "Goal Success", value: `${((summary.goal_completion_rate || 0).toFixed(1))}%`, sub: "On track", color: "border-blue-500", delay: "200ms" },
-          { title: "Portfolio Value", value: "₹12.4L", sub: "Estimated", color: "border-amber-500", delay: "300ms" }
+          { title: "Portfolio Value", value: `₹${(summary.total_value || 0).toLocaleString()}`, sub: "Live Market Value", color: "border-amber-500", delay: "300ms" }
         ].map((stat, i) => (
           <div key={i} className={`glass-card p-6 border-l-4 ${stat.color} animate-fade-in-up`} style={{ animationDelay: stat.delay }}>
             <p className="text-sm font-medium text-slate-400 uppercase tracking-wide">{stat.title}</p>

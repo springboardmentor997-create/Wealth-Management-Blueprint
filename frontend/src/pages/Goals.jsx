@@ -75,15 +75,15 @@ export default function Goals() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6 text-slate-200 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">🎯 Goals</h1>
+      <h1 className="text-3xl font-bold mb-6 text-foreground bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">🎯 Goals</h1>
 
       {error && <div className="bg-red-500/10 text-red-400 border border-red-500/20 p-3 rounded mb-4">{error}</div>}
 
       <div className="glass-card p-6 mb-8 animate-fade-in-up">
-        <h2 className="text-xl font-bold mb-6 text-slate-200 border-b border-slate-700/50 pb-2">{editing ? 'Edit Goal' : 'Create New Goal'}</h2>
+        <h2 className="text-xl font-bold mb-6 text-foreground border-b border-white/10 pb-2">{editing ? 'Edit Goal' : 'Create New Goal'}</h2>
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <select value={form.goal_type} onChange={e => setForm({ ...form, goal_type: e.target.value })} className="form-input bg-slate-900/50">
+            <select value={form.goal_type} onChange={e => setForm({ ...form, goal_type: e.target.value })} className="w-full bg-secondary border border-white/10 rounded-lg p-2 text-foreground focus:border-primary outline-none">
               <option value="retirement">Retirement</option>
               <option value="home">Home</option>
               <option value="education">Education</option>
@@ -94,14 +94,14 @@ export default function Goals() {
               placeholder="Target Amount (₹)"
               value={form.target_amount}
               onChange={e => setForm({ ...form, target_amount: e.target.value })}
-              className="form-input"
+              className="w-full bg-secondary border border-white/10 rounded-lg p-2 text-foreground focus:border-primary outline-none"
               required
             />
             <input
               type="date"
               value={form.target_date}
               onChange={e => setForm({ ...form, target_date: e.target.value })}
-              className="form-input"
+              className="w-full bg-secondary border border-white/10 rounded-lg p-2 text-foreground focus:border-primary outline-none"
               required
             />
             <input
@@ -109,7 +109,7 @@ export default function Goals() {
               placeholder="Monthly Contribution (₹)"
               value={form.monthly_contribution}
               onChange={e => setForm({ ...form, monthly_contribution: e.target.value })}
-              className="form-input"
+              className="w-full bg-secondary border border-white/10 rounded-lg p-2 text-foreground focus:border-primary outline-none"
               required
             />
           </div>
@@ -141,7 +141,7 @@ export default function Goals() {
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <div className="flex justify-between items-start mb-4">
-                <h3 className="font-bold text-xl text-slate-200 capitalize">{goal.goal_type}</h3>
+                <h3 className="font-bold text-xl text-foreground capitalize">{goal.goal_type}</h3>
                 <span className={`px-2 py-0.5 rounded text-xs font-medium border ${goal.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
                   {goal.status}
                 </span>
@@ -149,16 +149,16 @@ export default function Goals() {
 
               <div className="space-y-2 mb-6">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Target</span>
-                  <span className="text-slate-200 font-medium">₹{parseFloat(goal.target_amount || 0).toLocaleString()}</span>
+                  <span className="text-muted-foreground">Target</span>
+                  <span className="text-foreground font-medium">₹{parseFloat(goal.target_amount || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Monthly</span>
-                  <span className="text-slate-200 font-medium">₹{parseFloat(goal.monthly_contribution || 0).toLocaleString()}</span>
+                  <span className="text-muted-foreground">Monthly</span>
+                  <span className="text-foreground font-medium">₹{parseFloat(goal.monthly_contribution || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Date</span>
-                  <span className="text-slate-200 font-medium">{new Date(goal.target_date).toLocaleDateString()}</span>
+                  <span className="text-muted-foreground">Date</span>
+                  <span className="text-foreground font-medium">{new Date(goal.target_date).toLocaleDateString()}</span>
                 </div>
               </div>
 

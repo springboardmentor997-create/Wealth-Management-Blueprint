@@ -43,6 +43,8 @@ def run_simulation(sim_data: SimulationCreate, current_user: User = Depends(get_
     years = int(assumptions.get("years", 10))
     inflation_rate = float(assumptions.get("inflation_rate", 0.0))
     
+    print(f"DEBUG: Processing Simulation. Assumptions: {assumptions}") # Debug Log
+    
     # Calculate results
     sim_results = calculate_compound_interest(
         initial_amount=initial_amount,
@@ -61,7 +63,13 @@ def run_simulation(sim_data: SimulationCreate, current_user: User = Depends(get_
     )
     session.add(new_sim)
     session.commit()
-    session.refresh(new_sim)
+    print(f"DEBUG: Simulation Results Key Properties: Projected={sim_results.get('projectedValue')}")
+    
+    # Fail-Safe: Ensure results are returned even if DB storage/retrieval lagged
+    if not new_sim.results:
+        print("DEBUG: DB Refresh return empty results, using calculated values directly.")
+        new_sim.results = sim_results
+        
     return new_sim
 
 
