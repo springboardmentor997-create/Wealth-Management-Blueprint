@@ -104,74 +104,72 @@ def sync_portfolio_prices(
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)
 ):
-    print(f"🚀 STARTING SYNC for User: {current_user.email}")
+    print(f"🚀 STARTING SYNC (Stable Mode) for User: {current_user.email}")
     
     investments = db.query(Investment).filter(Investment.user_id == current_user.id).all()
     updated_count = 0
     
-    # 1. Internal Helper to get USD Rate (Self-contained safety)
+    # 1. Get USD Rate using .history() (Avoids fast_info crash)
+    usd_rate = 84.0 # Default fallback
     try:
         usd_ticker = yf.Ticker("INR=X")
-        # fast_info is much faster and reliable than history()
-        usd_rate = float(usd_ticker.fast_info.last_price) or 83.0
-        print(f"💵 Current USD Rate: {usd_rate}")
+        hist = usd_ticker.history(period="1d")
+        if not hist.empty:
+            usd_rate = float(hist['Close'].iloc[-1])
+            print(f"💵 USD Rate fetched: {usd_rate}")
     except Exception as e:
-        print(f"⚠️ Failed to get USD rate, using default 83.5. Error: {e}")
-        usd_rate = 83.5
+        print(f"⚠️ USD Fetch failed, using default 84.0. Error: {e}")
 
     # 2. Loop through assets
     for asset in investments:
-        # Skip if no valid ticker name (e.g., "Cash")
-        if not asset.asset_name or len(asset.asset_name) > 10: 
+        # Filter out bad names
+        if not asset.asset_name or len(asset.asset_name) > 15: 
             continue
 
         try:
             print(f"🔍 Checking: {asset.asset_name}...")
             ticker = yf.Ticker(asset.asset_name)
             
-            # Use fast_info for "Real Time" price (better than history)
-            current_price = ticker.fast_info.last_price
+            # ❌ REMOVED fast_info (The cause of the crash)
+            # ✅ ADDED .history() (The stable fix)
+            hist = ticker.history(period="1d")
             
-            # If fast_info fails, fallback to history
-            if not current_price:
-                 hist = ticker.history(period="1d")
-                 if not hist.empty:
-                     current_price = hist['Close'].iloc[-1]
-            
-            # If we still have no price, skip
-            if not current_price:
-                print(f"❌ No price data found for {asset.asset_name}")
+            if hist.empty:
+                print(f"   ❌ No data found for {asset.asset_name}")
                 continue
 
-            # 3. Currency Check & Conversion
-            # Yahoo Finance usually reports currency in the metadata
-            currency = ticker.fast_info.currency
+            # Get the latest closing price
+            raw_price = float(hist['Close'].iloc[-1])
             
-            # Convert to float to avoid Numpy errors
-            final_price_inr = float(current_price)
-
-            if currency == 'USD':
-                final_price_inr = final_price_inr * usd_rate
-                print(f"   -> Converted USD {current_price} to INR {final_price_inr}")
+            # 3. Currency Check (Manual Logic)
+            # Since fast_info crashes, we guess currency based on symbol
+            # Indian symbols usually end in .NS or .BO
+            if asset.asset_name.endswith('.NS') or asset.asset_name.endswith('.BO'):
+                final_price = raw_price
+            elif asset.asset_name == 'Gold' or asset.asset_name == 'Silver':
+                 # Commodities are tricky, assume INR if manually entered, or handle separately
+                 final_price = raw_price
+            else:
+                # Assume everything else (like 'AAPL', 'GOOGL') is USD
+                final_price = raw_price * usd_rate
+                print(f"   -> Converted USD {raw_price} to INR {final_price}")
 
             # 4. Update Database
-            # Calculate total value (Price * Units)
-            asset.current_value = final_price_inr * float(asset.units)
+            asset.current_value = final_price * float(asset.units)
             updated_count += 1
             print(f"   ✅ Updated {asset.asset_name} to ₹{asset.current_value}")
 
         except Exception as e:
-            print(f"   ❌ Failed to update {asset.asset_name}: {e}")
+            print(f"   ❌ Critical error on {asset.asset_name}: {e}")
             continue
 
     db.commit()
     print(f"🏁 SYNC COMPLETE. Updated {updated_count} assets.")
     
     return {
-        "msg": f"Synced {updated_count} assets successfully.", 
-        "usd_rate": usd_rate
+        "msg": f"Synced {updated_count} assets.", 
+        "usd_rate": round(usd_rate, 2)
     }
-
 # ---------------------------------------------------------
 # 5. SEARCH ASSETS (AUTOCOMPLETE)
 # ---------------------------------------------------------
