@@ -26,8 +26,9 @@ def get_admin_stats(db: Session = Depends(get_db), _=Depends(admin_required)):
         "pending_kyc": clients.filter(User.kyc_status == "Pending").count(),
         # Sum of all investments
         "total_aum": db.query(func.sum(Investment.current_value)).scalar() or 0,
-        # Count of active goals
-        "active_goals": db.query(Goal).filter(Goal.is_completed == False).count()
+        
+        # ⚠️ FIX IS HERE: Determine "Active" by math, not by a missing column
+        "active_goals": db.query(Goal).filter(Goal.current_amount < Goal.target_amount).count()
     }
 
 @router.get("/charts")
@@ -35,14 +36,12 @@ def get_admin_charts(db: Session = Depends(get_db), _=Depends(admin_required)):
     """
     Returns aggregated data for visualizations
     """
-    # 1. Risk Profile Distribution (Bar Chart)
-    # Counts users by their risk profile (e.g., High: 5, Low: 2)
+    # 1. Risk Profile Distribution
     risk_data = db.query(
         User.risk_profile, func.count(User.id)
     ).filter(User.role == 'user').group_by(User.risk_profile).all()
     
-    # 2. Top Assets by Value (Pie Chart)
-    # Sums up value per asset name (e.g., AAPL: $5000, Gold: $2000)
+    # 2. Top Assets by Value
     asset_data = db.query(
         Investment.asset_name, func.sum(Investment.current_value)
     ).group_by(Investment.asset_name).order_by(func.sum(Investment.current_value).desc()).limit(5).all()
