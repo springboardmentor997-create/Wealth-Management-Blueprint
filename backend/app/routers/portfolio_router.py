@@ -104,53 +104,51 @@ def sync_portfolio_prices(
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)
 ):
-    print(f"🚀 STARTING SYNC (Stable Mode) for User: {current_user.email}")
+    print(f"🚀 STARTING SYNC (5-Day Lookback) for User: {current_user.email}")
     
     investments = db.query(Investment).filter(Investment.user_id == current_user.id).all()
     updated_count = 0
     
-    # 1. Get USD Rate using .history() (Avoids fast_info crash)
-    usd_rate = 84.0 # Default fallback
+    # 1. Get USD Rate (Robust)
+    usd_rate = 84.0 
     try:
         usd_ticker = yf.Ticker("INR=X")
-        hist = usd_ticker.history(period="1d")
+        # Fetch 5 days to be safe against weekends
+        hist = usd_ticker.history(period="5d")
         if not hist.empty:
             usd_rate = float(hist['Close'].iloc[-1])
             print(f"💵 USD Rate fetched: {usd_rate}")
     except Exception as e:
-        print(f"⚠️ USD Fetch failed, using default 84.0. Error: {e}")
+        print(f"⚠️ USD Fetch failed, using default {usd_rate}")
 
     # 2. Loop through assets
     for asset in investments:
-        # Filter out bad names
-        if not asset.asset_name or len(asset.asset_name) > 15: 
+        if not asset.asset_name or len(asset.asset_name) > 20: 
             continue
 
         try:
             print(f"🔍 Checking: {asset.asset_name}...")
             ticker = yf.Ticker(asset.asset_name)
             
-            # ❌ REMOVED fast_info (The cause of the crash)
-            # ✅ ADDED .history() (The stable fix)
-            hist = ticker.history(period="1d")
+            # ✅ FIX: Fetch 5 days instead of 1 day
+            # This handles weekends, holidays, and market-closed hours
+            hist = ticker.history(period="5d")
             
             if hist.empty:
-                print(f"   ❌ No data found for {asset.asset_name}")
+                print(f"   ❌ No data found for {asset.asset_name} (Try checking the symbol spelling)")
                 continue
 
-            # Get the latest closing price
+            # ✅ Take the LAST available closing price (Friday's price if today is Sunday)
             raw_price = float(hist['Close'].iloc[-1])
             
             # 3. Currency Check (Manual Logic)
-            # Since fast_info crashes, we guess currency based on symbol
-            # Indian symbols usually end in .NS or .BO
+            # Indian symbols end in .NS (NSE) or .BO (BSE)
             if asset.asset_name.endswith('.NS') or asset.asset_name.endswith('.BO'):
                 final_price = raw_price
-            elif asset.asset_name == 'Gold' or asset.asset_name == 'Silver':
-                 # Commodities are tricky, assume INR if manually entered, or handle separately
-                 final_price = raw_price
+            elif asset.asset_name == 'Gold':
+                 final_price = raw_price 
             else:
-                # Assume everything else (like 'AAPL', 'GOOGL') is USD
+                # Assume USD for others (AAPL, GOOGL, BTC-USD)
                 final_price = raw_price * usd_rate
                 print(f"   -> Converted USD {raw_price} to INR {final_price}")
 
@@ -170,6 +168,8 @@ def sync_portfolio_prices(
         "msg": f"Synced {updated_count} assets.", 
         "usd_rate": round(usd_rate, 2)
     }
+
+
 # ---------------------------------------------------------
 # 5. SEARCH ASSETS (AUTOCOMPLETE)
 # ---------------------------------------------------------
