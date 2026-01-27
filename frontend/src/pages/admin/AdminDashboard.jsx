@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // 👈 1. Import Hook
 import client from '../../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const AdminPanel = () => {
+  const navigate = useNavigate(); // 👈 2. Initialize Hook
   const [stats, setStats] = useState({ total_users: 0, pending_kyc: 0, total_aum: 0, active_goals: 0 });
   const [chartData, setChartData] = useState({ risk_distribution: [], asset_allocation: [] });
   const [users, setUsers] = useState([]);
@@ -16,6 +18,14 @@ const AdminPanel = () => {
   useEffect(() => {
     loadAdminData();
   }, []);
+
+  // 👇 3. ADDED: Logout Logic
+  const handleLogout = () => {
+    // Clear the security token
+    localStorage.removeItem('access_token');
+    // Redirect to Login
+    navigate('/login');
+  };
 
   const loadAdminData = async () => {
     try {
@@ -90,7 +100,17 @@ const AdminPanel = () => {
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                 SYSTEM ONLINE
             </div>
+            
             <button onClick={loadAdminData} className="text-sm text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-md font-medium">Refresh</button>
+            
+            {/* 👇 4. ADDED: Logout Button */}
+            <button 
+                onClick={handleLogout} 
+                className="text-sm text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-md font-bold transition-colors"
+            >
+                Logout
+            </button>
+
             <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-xs uppercase">AD</div>
         </div>
       </div>
@@ -121,7 +141,7 @@ const AdminPanel = () => {
           </div>
         </div>
 
-        {/* 2. CHARTS SECTION (NEW) */}
+        {/* 2. CHARTS SECTION */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Chart 1: Asset Distribution */}
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
@@ -166,7 +186,7 @@ const AdminPanel = () => {
             </div>
         </div>
 
-        {/* 3. SYSTEM STATUS & LOGS (NEW) */}
+        {/* 3. SYSTEM STATUS & LOGS */}
         <div className="bg-slate-900 text-slate-300 rounded-xl p-6 mb-8 flex justify-between items-center shadow-lg">
             <div>
                 <h3 className="text-white font-bold text-lg mb-1">Nightly Sync Service</h3>
@@ -180,7 +200,7 @@ const AdminPanel = () => {
             </div>
         </div>
 
-        {/* 4. DATA TABLE (Existing) */}
+        {/* 4. DATA TABLE */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
             <h2 className="text-sm font-bold text-gray-700">User Database</h2>
@@ -240,7 +260,7 @@ const AdminPanel = () => {
           </table>
         </div>
 
-        {/* SIDE DRAWER (Existing logic, just cleaner UI) */}
+        {/* SIDE DRAWER */}
         <AnimatePresence>
           {selectedUser && (
             <>
