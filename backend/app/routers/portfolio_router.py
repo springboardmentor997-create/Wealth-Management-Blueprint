@@ -104,46 +104,72 @@ def sync_portfolio_prices(
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)
 ):
-    investments = db.query(Investment).filter(Investment.user_id == current_user.id).all()
+    print(f"🚀 STARTING SYNC for User: {current_user.email}")
     
-    usd_rate = get_usd_inr_rate() # Fetch rate once per sync to save time
+    investments = db.query(Investment).filter(Investment.user_id == current_user.id).all()
     updated_count = 0
+    
+    # 1. Internal Helper to get USD Rate (Self-contained safety)
+    try:
+        usd_ticker = yf.Ticker("INR=X")
+        # fast_info is much faster and reliable than history()
+        usd_rate = float(usd_ticker.fast_info.last_price) or 83.0
+        print(f"💵 Current USD Rate: {usd_rate}")
+    except Exception as e:
+        print(f"⚠️ Failed to get USD rate, using default 83.5. Error: {e}")
+        usd_rate = 83.5
 
+    # 2. Loop through assets
     for asset in investments:
+        # Skip if no valid ticker name (e.g., "Cash")
+        if not asset.asset_name or len(asset.asset_name) > 10: 
+            continue
+
         try:
-            # 1. Fetch live data
-            ticker = yf.Ticker(asset.asset_name) # e.g., "AAPL" or "RELIANCE.NS"
-            history = ticker.history(period="1d")
+            print(f"🔍 Checking: {asset.asset_name}...")
+            ticker = yf.Ticker(asset.asset_name)
             
-            if not history.empty:
-                # Get the raw price (this is often a numpy.float64)
-                raw_price = history['Close'].iloc[-1]
-                
-                # 2. 🕵️‍♂️ CHECK CURRENCY
-                # 'fast_info' is faster than 'info' for currency checks
-                currency = ticker.fast_info.get('currency', 'INR') 
-                
-                # 3. CONVERT IF USD
-                if currency == 'USD':
-                    raw_price = raw_price * usd_rate
-                
-                # 🛠️ CRITICAL FIX: Convert numpy type to standard Python float
-                # This prevents the "schema 'np' does not exist" error in Postgres
-                current_price = float(raw_price)
-                
-                # 4. Calculate Total Value
-                asset.current_value = float(current_price * asset.units)
-                updated_count += 1
-                
+            # Use fast_info for "Real Time" price (better than history)
+            current_price = ticker.fast_info.last_price
+            
+            # If fast_info fails, fallback to history
+            if not current_price:
+                 hist = ticker.history(period="1d")
+                 if not hist.empty:
+                     current_price = hist['Close'].iloc[-1]
+            
+            # If we still have no price, skip
+            if not current_price:
+                print(f"❌ No price data found for {asset.asset_name}")
+                continue
+
+            # 3. Currency Check & Conversion
+            # Yahoo Finance usually reports currency in the metadata
+            currency = ticker.fast_info.currency
+            
+            # Convert to float to avoid Numpy errors
+            final_price_inr = float(current_price)
+
+            if currency == 'USD':
+                final_price_inr = final_price_inr * usd_rate
+                print(f"   -> Converted USD {current_price} to INR {final_price_inr}")
+
+            # 4. Update Database
+            # Calculate total value (Price * Units)
+            asset.current_value = final_price_inr * float(asset.units)
+            updated_count += 1
+            print(f"   ✅ Updated {asset.asset_name} to ₹{asset.current_value}")
+
         except Exception as e:
-            print(f"Failed to update {asset.asset_name}: {e}")
+            print(f"   ❌ Failed to update {asset.asset_name}: {e}")
             continue
 
     db.commit()
+    print(f"🏁 SYNC COMPLETE. Updated {updated_count} assets.")
     
     return {
-        "msg": f"Successfully synced {updated_count} assets.", 
-        "usd_rate_used": round(usd_rate, 2)
+        "msg": f"Synced {updated_count} assets successfully.", 
+        "usd_rate": usd_rate
     }
 
 # ---------------------------------------------------------
