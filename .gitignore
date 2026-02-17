@@ -20,6 +20,11 @@ coverage.xml
 *.log
 .pytest_cache/
 
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
 # Node.js
 node_modules/
 dist/
