@@ -191,10 +191,7 @@ export function Header() {
               </div>
               <Avatar className="h-9 w-9">
                 {user?.profile_picture ? (
-                  <AvatarImage 
-                    src={user.profile_picture.startsWith('data:') ? user.profile_picture : `${API_BASE_URL}${user.profile_picture}`} 
-                    alt={userName} 
-                  />
+                  <AvatarImage src={`${API_BASE_URL}${user.profile_picture}`} alt={userName} />
                 ) : null}
                 <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
                   {initials}

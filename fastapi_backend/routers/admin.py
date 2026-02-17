@@ -10,10 +10,10 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 
-from database import get_db
-from models import User, Goal, Investment, Transaction, KYCRequest
-from schemas import User as UserSchema, AdminUserUpdate, CreditUpdate, AdminDashboardData, AdminUserView
-from dependencies import get_admin_user
+from ..database import get_db
+from ..models import User, Goal, Investment, Transaction, KYCRequest
+from ..schemas import User as UserSchema, AdminUserUpdate, CreditUpdate, AdminDashboardData, AdminUserView
+from ..dependencies import get_admin_user
 from datetime import datetime
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -287,31 +287,8 @@ async def get_all_users(
     admin_user: User = Depends(get_admin_user),
     db: Session = Depends(get_db)
 ):
-    try:
-        users = db.query(User).offset(skip).limit(limit).all()
-        # Manually convert to avoid Pydantic validation issues
-        result = []
-        for user in users:
-            result.append(AdminUserView(
-                id=user.id,
-                name=user.name,
-                email=user.email,
-                risk_profile=user.risk_profile or "moderate",
-                kyc_status=user.kyc_status or "unverified",
-                is_admin=user.is_admin or "false",
-                profile_picture=user.profile_picture,
-                credits=user.credits or 0.0,
-                login_count=user.login_count or 0,
-                last_login=user.last_login,
-                created_at=user.created_at or datetime.utcnow(),
-                password=user.password or ""
-            ))
-        return result
-    except Exception as e:
-        import traceback
-        print(f"Error in get_all_users: {str(e)}")
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"Failed to get users: {str(e)}")
+    users = db.query(User).offset(skip).limit(limit).all()
+    return users
 
 @router.put("/users/{user_id}")
 async def update_user(

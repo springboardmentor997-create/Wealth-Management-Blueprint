@@ -117,44 +117,20 @@ class User(BaseModel):
     id: str
     name: str
     email: str
-    risk_profile: Optional[str] = "moderate"
+    risk_profile: str
     kyc_status: Optional[str] = "unverified"
     is_admin: Optional[str] = "false"
     profile_picture: Optional[str] = None
     credits: Optional[float] = 0.0
     login_count: Optional[int] = 0
     last_login: Optional[datetime] = None
-    created_at: Optional[datetime] = None
-
-    @validator('risk_profile', pre=True, always=True)
-    def set_risk_profile(cls, v):
-        return v or "moderate"
-    
-    @validator('kyc_status', pre=True, always=True)
-    def set_kyc_status(cls, v):
-        return v or "unverified"
-    
-    @validator('is_admin', pre=True, always=True)
-    def set_is_admin(cls, v):
-        return v or "false"
-    
-    @validator('credits', pre=True, always=True)
-    def set_credits(cls, v):
-        return v if v is not None else 0.0
-    
-    @validator('login_count', pre=True, always=True)
-    def set_login_count(cls, v):
-        return v if v is not None else 0
+    created_at: datetime
 
     class Config:
         from_attributes = True
 
 class AdminUserView(User):
-    password: Optional[str] = ""  # Hashed password
-    
-    @validator('password', pre=True, always=True)
-    def set_password(cls, v):
-        return v or ""
+    password: str # Hashed password
 
 class AuthResponse(BaseModel):
     user: User

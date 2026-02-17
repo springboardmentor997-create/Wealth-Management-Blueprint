@@ -8,14 +8,11 @@ import shutil
 import os
 import time
 import logging
-import base64
-from io import BytesIO
-from PIL import Image
 
-from database import get_db
-from models import User
-from schemas import UserCreate, UserLogin, AuthResponse, User as UserSchema, UserUpdate, RefreshTokenRequest, UserPasswordUpdate
-from auth import get_password_hash, verify_password, create_access_token, create_refresh_token, verify_refresh_token, get_current_user
+from ..database import get_db
+from ..models import User
+from ..schemas import UserCreate, UserLogin, AuthResponse, User as UserSchema, UserUpdate, RefreshTokenRequest, UserPasswordUpdate
+from ..auth import get_password_hash, verify_password, create_access_token, create_refresh_token, verify_refresh_token, get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -114,21 +111,18 @@ async def login(login_data: UserLogin, db: Session = Depends(get_db)):
         logger.info(f"User query took {query_time:.3f}s for email: {login_data.email}")
         
         if not user:
-            logger.warning(f"Login attempt failed: User not found for email: {login_data.email}")
-            raise HTTPException(status_code=401, detail="Invalid email or password")
+            raise HTTPException(status_code=404, detail="User not found. Please register first.")
         
         # Verify password
         try:
             pwd_start = time.time()
             is_valid = verify_password(login_data.password, user.password)
             pwd_time = time.time() - pwd_start
-            logger.info(f"Password verification took {pwd_time:.3f}s, result: {is_valid}")
+            logger.info(f"Password verification took {pwd_time:.3f}s")
             
             if not is_valid:
-                logger.warning(f"Login attempt failed: Invalid password for email: {login_data.email}")
-                raise HTTPException(status_code=401, detail="Invalid email or password")
+                raise HTTPException(status_code=401, detail="Invalid password")
         except ValueError as ve:
-            logger.error(f"Password verification error: {str(ve)}")
             raise HTTPException(status_code=400, detail=str(ve))
         
         # Update login tracking
@@ -249,53 +243,29 @@ async def upload_profile_image(
     db: Session = Depends(get_db)
 ):
     try:
-        # Validate file type
-        allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
-        if file.content_type not in allowed_types:
-            raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.")
+        # Create directory if it doesn't exist
+        upload_dir = "uploads/profile_pictures"
+        os.makedirs(upload_dir, exist_ok=True)
         
-        # Read file content
-        file_content = await file.read()
+        # Generate unique filename
+        file_extension = os.path.splitext(file.filename)[1]
+        filename = f"{current_user.id}_{uuid.uuid4()}{file_extension}"
+        file_path = os.path.join(upload_dir, filename)
         
-        # Limit file size (e.g., 5MB before compression)
-        max_size = 5 * 1024 * 1024  # 5MB
-        if len(file_content) > max_size:
-            raise HTTPException(status_code=400, detail="File too large. Maximum size is 5MB.")
-        
-        # Open image and resize/compress
-        image = Image.open(BytesIO(file_content))
-        
-        # Convert to RGB if necessary (for PNG with transparency)
-        if image.mode in ('RGBA', 'P'):
-            image = image.convert('RGB')
-        
-        # Resize to max 200x200 (profile picture size)
-        max_dimension = 200
-        image.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
-        
-        # Save compressed image to bytes
-        output_buffer = BytesIO()
-        image.save(output_buffer, format='JPEG', quality=85, optimize=True)
-        compressed_content = output_buffer.getvalue()
-        
-        # Convert to Base64 data URI
-        base64_encoded = base64.b64encode(compressed_content).decode('utf-8')
-        data_uri = f"data:image/jpeg;base64,{base64_encoded}"
-        
-        logger.info(f"Compressed image size: {len(data_uri)} chars (from {len(file_content)} bytes)")
-        
-        # Store Base64 data URI in database
-        current_user.profile_picture = data_uri
+        # Save file
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        # Update user profile
+        # Store relative path that can be served
+        relative_path = f"/static/profile_pictures/{filename}"
+        current_user.profile_picture = relative_path
         
         db.commit()
         db.refresh(current_user)
         
-        logger.info(f"User profile updated with compressed Base64 image for user: {current_user.id}")
         return UserSchema.from_orm(current_user)
-    except HTTPException:
-        raise
     except Exception as e:
-        logger.error(f"Image upload failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Image upload failed: {str(e)}")
 
         raise HTTPException(status_code=500, detail=f"Profile update failed: {str(e)}")

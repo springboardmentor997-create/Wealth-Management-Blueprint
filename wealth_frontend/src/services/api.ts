@@ -1,5 +1,4 @@
-// Use relative URL when served from same domain, or use environment variable
-const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || '';
+const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8000';
 // Helper to store JWT
 function storeToken(token: string) {
   if (token) {
@@ -35,7 +34,7 @@ class ApiClient {
   private token: string | null = null;
 
   constructor(baseURL: string) {
-    this.baseURL = typeof baseURL === 'string' ? baseURL : '';
+    this.baseURL = typeof baseURL === 'string' ? baseURL : 'http://localhost:8000';
     this.token = localStorage.getItem('auth_token');
   }
 
@@ -347,25 +346,6 @@ class ApiClient {
         try {
             const data = await this.get<Record<string, unknown>>('/kyc/status');
             return { data, error: null };
-        } catch (error) {
-            return { data: null, error: error as Error };
-        }
-    }
-
-    async getPendingKYC() {
-        try {
-            const data = await this.get<Record<string, unknown>[]>('/kyc/pending');
-            return { data, error: null };
-        } catch (error) {
-            return { data: null, error: error as Error };
-        }
-    }
-
-    async getKYCByUserId(userId: string) {
-        try {
-            const allKyc = await this.get<Record<string, unknown>[]>('/kyc/pending');
-            const userKyc = allKyc.find((kyc: Record<string, unknown>) => kyc.user_id === userId);
-            return { data: userKyc || null, error: null };
         } catch (error) {
             return { data: null, error: error as Error };
         }

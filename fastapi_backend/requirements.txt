@@ -17,5 +17,4 @@ email-validator
 requests
 pandas
 pydantic[email]
-Pillow>=10.4.0
 
